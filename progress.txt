@@ -7,6 +7,10 @@
 - Dark mode supported via prefers-color-scheme media query
 - Run `npx tsc --noEmit` from /app directory for typecheck
 - Run `npm run lint` from /app directory for linting
+- SQLite database with better-sqlite3 for data persistence
+- Database file stored in app/data/ directory (gitignored)
+- Session created on page load via SessionProvider + /api/session endpoint
+- User hash = SHA-256(IP + User Agent) for anonymous repeat visitor identification
 
 ---
 
@@ -24,5 +28,31 @@
   - Layout uses sticky header with navigation
   - Color palette uses CSS custom properties with dark mode support
   - Main content area max-w-3xl for readability
+
+---
+
+## 2026-01-26 - US-002
+- What was implemented: Database and session tracking
+- Files changed:
+  - app/src/lib/types.ts - TypeScript types for Session, PathAttempt, PathStep, Diagnosis
+  - app/src/lib/db.ts - Database initialization and schema (SQLite with better-sqlite3)
+  - app/src/lib/session.ts - Session management functions (create, get, update)
+  - app/src/app/api/session/route.ts - API endpoint for session CRUD
+  - app/src/components/SessionProvider.tsx - React context for session state
+  - app/src/app/layout.tsx - Added SessionProvider wrapper
+  - app/.gitignore - Added /data/ directory
+  - package.json - Added better-sqlite3, uuid dependencies
+- **Verification performed:**
+  - All 4 tables created: sessions, path_attempts, path_steps, diagnoses
+  - Session created on page load with user_hash from IP + User Agent
+  - No PII stored - user_hash is SHA-256 hash, not reversible
+  - Migrations run automatically on first database access
+  - Build passes, typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - Database is SQLite stored at app/data/howwasihacked.db (gitignored)
+  - Use getDb() from lib/db.ts to access database - it's a singleton
+  - Session ID stored in localStorage as 'howwasihacked_session_id'
+  - Use useSession() hook in client components to get sessionId
+  - API routes for session at /api/session (POST to create, GET with ?id= to fetch)
 
 ---
