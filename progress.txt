@@ -53,6 +53,28 @@
   - Use getDb() from lib/db.ts to access database - it's a singleton
   - Session ID stored in localStorage as 'howwasihacked_session_id'
   - Use useSession() hook in client components to get sessionId
-  - API routes for session at /api/session (POST to create, GET with ?id= to fetch)
+  - API routes for session at /api/session (POST to create, GET with ?id= to fetch, PATCH to update)
+
+---
+
+## 2026-01-26 - US-003
+- What was implemented: Wallet type selection screen
+- Files changed:
+  - app/src/components/WalletSelection.tsx - New component with wallet categories and sub-options
+  - app/src/app/diagnostic/page.tsx - Integrated WalletSelection with session management
+  - app/src/app/api/session/route.ts - Added PATCH endpoint for updating session
+  - app/src/app/globals.css - Added fadeIn animation for smooth transitions
+- **Verification performed:**
+  - Four wallet categories displayed: Browser Extension, Mobile, Hardware, Other
+  - Sub-options shown for each category (MetaMask, Rabby, Trust Wallet, Ledger, etc.)
+  - Selection saves to database via PATCH /api/session
+  - Smooth fade-in animation when sub-options and continue button appear
+  - Touch-friendly: category buttons 72px min-height, wallet buttons 52px min-height
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - WalletSelection component uses WALLET_CATEGORIES constant for maintainability
+  - Use animate-fadeIn class for smooth content reveals
+  - PATCH /api/session accepts { sessionId, walletType, walletSpecific }
+  - Diagnostic flow will go: wallet type → value range → branching question → path-specific questions
 
 ---
