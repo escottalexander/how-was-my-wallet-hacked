@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSession, createUserHash, getSession } from '@/lib/session';
+import { createSession, createUserHash, getSession, updateSessionWallet } from '@/lib/session';
+import type { WalletType } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,6 +54,44 @@ export async function GET(request: NextRequest) {
     console.error('Error getting session:', error);
     return NextResponse.json(
       { error: 'Failed to get session' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { sessionId, walletType, walletSpecific } = body;
+
+    if (!sessionId) {
+      return NextResponse.json(
+        { error: 'Session ID required' },
+        { status: 400 }
+      );
+    }
+
+    // Verify session exists
+    const session = getSession(sessionId);
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Session not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update wallet information if provided
+    if (walletType) {
+      updateSessionWallet(sessionId, walletType as WalletType, walletSpecific ?? null);
+    }
+
+    // Return updated session
+    const updatedSession = getSession(sessionId);
+    return NextResponse.json(updatedSession);
+  } catch (error) {
+    console.error('Error updating session:', error);
+    return NextResponse.json(
+      { error: 'Failed to update session' },
       { status: 500 }
     );
   }
