@@ -1,0 +1,28 @@
+## Codebase Patterns
+- Next.js 16 app router project with TypeScript
+- Tailwind CSS v4 for styling with CSS custom properties in globals.css
+- Mobile-first responsive design approach
+- Mental health app aesthetic: calm purple/blue colors, generous whitespace
+- CSS variables defined in :root for theming (--primary, --foreground, --text-muted, etc.)
+- Dark mode supported via prefers-color-scheme media query
+- Run `npx tsc --noEmit` from /app directory for typecheck
+- Run `npm run lint` from /app directory for linting
+
+---
+
+## 2026-01-26 - US-001
+- What was implemented: Project setup and welcome screen
+- Files changed: Initial commit included all scaffolding
+- **Verification performed:**
+  - Welcome screen messaging matches PRD exactly
+  - Navigation header with "Learn Best Practices" link present
+  - Get Started button links to /diagnostic
+  - Typecheck passes
+  - Lint passes
+- **Learnings for future iterations:**
+  - The welcome screen copy in page.tsx matches PRD Entry Point section
+  - Layout uses sticky header with navigation
+  - Color palette uses CSS custom properties with dark mode support
+  - Main content area max-w-3xl for readability
+
+---
