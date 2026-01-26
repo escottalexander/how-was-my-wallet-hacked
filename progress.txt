@@ -98,3 +98,29 @@
   - Next step in flow is /diagnostic/timing (branching question for US-005)
 
 ---
+
+## 2026-01-26 - US-005
+- What was implemented: Active vs noticed later branching question
+- Files changed:
+  - app/src/components/TimingSelection.tsx - New component with 3 timing options
+  - app/src/app/diagnostic/timing/page.tsx - Page for timing branching question
+  - app/src/lib/session.ts - Added PathAttempt and PathStep functions (createPathAttempt, getLatestPathAttempt, getPathAttempt, createPathStep, getPathSteps)
+  - app/src/app/api/path/route.ts - New API endpoint for path attempts and steps
+- **Verification performed:**
+  - Question displayed: "Were you actively using your wallet when the funds disappeared, or did you notice it later?"
+  - Three options: "I was using my wallet at the time", "I noticed it later / wasn't using it", "I'm not sure"
+  - Selection creates new PathAttempt record with incremented attempt_number
+  - Selection creates first PathStep record with question_id="timing" and answer_selected
+  - "active" answer routes to /diagnostic/path-b (malicious transaction path)
+  - "noticed_later" and "not_sure" route to /diagnostic/path-a (seed phrase compromise path)
+  - Path attempt ID stored in sessionStorage for flow continuity
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - TimingSelection exports TimingAnswer type for reuse
+  - API at /api/path: POST creates PathAttempt + optional first step, GET retrieves attempt + steps, PATCH adds steps
+  - Path attempt ID stored in sessionStorage as 'howwasihacked_path_attempt_id'
+  - PathAttempt auto-increments attempt_number per session (for retry tracking)
+  - PathStep auto-increments step_order per attempt (for ordered question flow)
+  - Next steps: implement /diagnostic/path-a (US-006) and /diagnostic/path-b (US-007)
+
+---
