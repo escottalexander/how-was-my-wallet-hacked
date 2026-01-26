@@ -78,3 +78,23 @@
   - Diagnostic flow will go: wallet type → value range → branching question → path-specific questions
 
 ---
+
+## 2026-01-26 - US-004
+- What was implemented: Value range collection screen
+- Files changed:
+  - app/src/components/ValueRangeSelection.tsx - New component with 6 value range options
+  - app/src/app/diagnostic/value/page.tsx - Page for value range step in diagnostic
+  - app/src/app/api/session/route.ts - Added valueRange support to PATCH endpoint
+- **Verification performed:**
+  - Six value ranges displayed: Under $100, $100-$1,000, $1,000-$10,000, $10,000-$100,000, Over $100,000, Prefer not to say
+  - Selection saves to database via PATCH /api/session with valueRange field
+  - Non-intrusive copy: "This is optional and helps us understand attack patterns. Your response is completely anonymous."
+  - Smooth fade-in animation for continue button (animate-fadeIn class)
+  - Touch-friendly: 56px min-height buttons
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - ValueRangeSelection follows same pattern as WalletSelection component
+  - PATCH /api/session now accepts { sessionId, valueRange } in addition to wallet fields
+  - Next step in flow is /diagnostic/timing (branching question for US-005)
+
+---
