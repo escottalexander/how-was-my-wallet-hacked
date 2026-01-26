@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { SessionProvider } from "@/components/SessionProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -44,9 +45,11 @@ export default function RootLayout({
             </Link>
           </nav>
         </header>
-        <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
-          {children}
-        </main>
+        <SessionProvider>
+          <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+            {children}
+          </main>
+        </SessionProvider>
       </body>
     </html>
   );
