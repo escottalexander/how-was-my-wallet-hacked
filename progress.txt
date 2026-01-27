@@ -220,3 +220,33 @@
   - Next steps: implement diagnosis screens (US-009+) that use these probabilities
 
 ---
+
+## 2026-01-27 - US-009
+- What was implemented: Diagnosis screens for seed phrase related diagnoses
+- Files changed:
+  - app/src/components/DiagnosisScreen.tsx - New component with all diagnosis types and copy per PRD
+  - app/src/app/diagnostic/diagnosis/page.tsx - Page that uses DiagnosisScreen component
+  - app/src/app/api/diagnosis/route.ts - API endpoint for diagnosis CRUD (create, get, update)
+  - app/src/lib/session.ts - Added diagnosis functions (createDiagnosis, getDiagnosis, updateDiagnosisAccepted, etc.)
+- **Verification performed:**
+  - Cloud Storage diagnosis screen with copy per PRD
+  - Phone Storage (screenshot) diagnosis screen with copy per PRD
+  - Digital Storage (notes/text) diagnosis screen with copy per PRD
+  - Password Reuse diagnosis screen with link to haveibeenpwned.com
+  - Each diagnosis shows: authoritative statement, how attack works, empathy, action items
+  - Links to Learn section and HackedWalletRecovery.com
+  - 'This doesn't seem right' button to try another path
+  - Diagnosis recorded to database with accepted boolean
+  - clicked_learn and clicked_hwr tracking implemented
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - DiagnosisScreen component contains all 17 diagnosis types with copy from PRD
+  - DIAGNOSIS_CONTENT record maps diagnosis types to title, mainCopy, empathy, actionItems, externalLinks
+  - MALICIOUS_TX_CONTEXT provides context-specific additions for malicious_transaction based on how_found
+  - DiagnosisState uses useSyncExternalStore to read from sessionStorage (avoids set-state-in-effect lint error)
+  - API at /api/diagnosis: POST creates, GET retrieves by id/pathAttemptId, PATCH updates accepted/clickedLearn/clickedHwr
+  - When diagnosis rejected, new path attempt is created and user goes back to /diagnostic/timing
+  - Diagnosis types stored in sessionStorage as 'howwasihacked_diagnosis_type' and context as 'howwasihacked_diagnosis_context'
+  - Next steps: US-010 (phishing/social engineering diagnoses), US-011 (setup/transaction diagnoses), US-012 (path rejection flow)
+
+---
