@@ -255,3 +255,27 @@ export function updateDiagnosisClickedHwr(id: string): void {
   `);
   stmt.run(id);
 }
+
+// Get all rejected diagnoses for a session
+export function getRejectedDiagnosesForSession(sessionId: string): string[] {
+  const db = getDb();
+  const stmt = db.prepare(`
+    SELECT DISTINCT d.diagnosis_type
+    FROM diagnoses d
+    JOIN path_attempts pa ON d.path_attempt_id = pa.id
+    WHERE pa.session_id = ? AND d.accepted = 0
+  `);
+  const rows = stmt.all(sessionId) as { diagnosis_type: string }[];
+  return rows.map((row) => row.diagnosis_type);
+}
+
+// Get all path attempts for a session
+export function getPathAttemptsForSession(sessionId: string): PathAttempt[] {
+  const db = getDb();
+  const stmt = db.prepare(`
+    SELECT * FROM path_attempts
+    WHERE session_id = ?
+    ORDER BY attempt_number ASC
+  `);
+  return stmt.all(sessionId) as PathAttempt[];
+}

@@ -118,10 +118,14 @@ export default function DiagnosisPage() {
   };
 
   const handleReject = async () => {
-    if (!diagnosisId || !sessionId) return;
+    if (!diagnosisId || !sessionId || !diagnosisState) return;
 
     setIsSubmitting(true);
     try {
+      // Get the current path attempt ID before clearing
+      const currentPathAttemptId = diagnosisState.pathAttemptId;
+      const rejectedDiagnosisType = diagnosisState.diagnosisType;
+
       // Mark this diagnosis as rejected
       await fetch('/api/diagnosis', {
         method: 'PATCH',
@@ -132,12 +136,27 @@ export default function DiagnosisPage() {
         }),
       });
 
+      // Get probability guidance including fork point and suggested path
+      const probResponse = await fetch(
+        `/api/probability?sessionId=${sessionId}&pathAttemptId=${currentPathAttemptId}&rejectedDiagnosis=${rejectedDiagnosisType}`
+      );
+
+      if (!probResponse.ok) {
+        throw new Error('Failed to get probability guidance');
+      }
+
+      const probData = await probResponse.json();
+      const { suggestedPath, forkPoint, rejectedDiagnoses } = probData;
+
       // Clear the stored diagnosis data
       sessionStorage.removeItem('howwasihacked_diagnosis_type');
       sessionStorage.removeItem('howwasihacked_diagnosis_context');
       sessionStorage.removeItem('howwasihacked_path_attempt_id');
 
-      // Create a new path attempt and go back to timing question
+      // Store rejected diagnoses for the retry flow
+      sessionStorage.setItem('howwasihacked_rejected_diagnoses', JSON.stringify(rejectedDiagnoses));
+
+      // Create a new path attempt
       const response = await fetch('/api/path', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -149,8 +168,23 @@ export default function DiagnosisPage() {
       if (response.ok) {
         const data = await response.json();
         sessionStorage.setItem('howwasihacked_path_attempt_id', data.pathAttempt.id);
-        // Go back to timing for a fresh start on a new path
-        router.push('/diagnostic/timing');
+
+        // Store the fork point and retry info for the path pages
+        sessionStorage.setItem('howwasihacked_fork_point', forkPoint || 'timing');
+        sessionStorage.setItem('howwasihacked_is_retry', 'true');
+        sessionStorage.setItem('howwasihacked_attempt_number', String(data.pathAttempt.attempt_number));
+
+        // Route to the appropriate path based on fork point
+        if (forkPoint === 'timing') {
+          // Need to restart from beginning - use timing question
+          router.push('/diagnostic/timing');
+        } else if (suggestedPath === 'path-b') {
+          // Route to Path B (malicious transaction)
+          router.push('/diagnostic/path-b');
+        } else {
+          // Route to Path A with the fork point
+          router.push('/diagnostic/path-a');
+        }
       }
     } catch (err) {
       console.error('Error rejecting diagnosis:', err);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, getPathAttempt, getPathSteps } from '@/lib/session';
+import { getSession, getPathAttempt, getPathSteps, getRejectedDiagnosesForSession } from '@/lib/session';
 import {
   createInitialProbabilities,
   applyPathSteps,
@@ -101,6 +101,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get all rejected diagnoses for this session
+    const allRejectedDiagnoses = getRejectedDiagnosesForSession(sessionId);
+
     // Get path steps to determine fork point
     let steps: ReturnType<typeof getPathSteps> = [];
     if (pathAttemptId) {
@@ -117,13 +120,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Get initial probabilities with wallet type
-    const state = createInitialProbabilities(session.wallet_type);
+    let state = createInitialProbabilities(session.wallet_type);
+
+    // Apply all previously rejected diagnoses
+    for (const rejected of allRejectedDiagnoses) {
+      state = rejectDiagnosis(state, rejected as DiagnosisType);
+    }
+
     const suggestedPath = suggestPathBranch(state);
+    const mostLikely = getMostLikelyDiagnosis(state);
+    const topDiagnoses = getTopDiagnoses(state, 5);
 
     return NextResponse.json({
       suggestedPath,
       forkPoint,
       walletType: session.wallet_type,
+      rejectedDiagnoses: allRejectedDiagnoses,
+      mostLikelyDiagnosis: mostLikely,
+      topDiagnoses,
     });
   } catch (error) {
     console.error('Error getting probability guidance:', error);

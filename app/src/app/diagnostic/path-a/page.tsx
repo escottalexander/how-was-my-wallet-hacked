@@ -11,12 +11,38 @@ export default function PathAPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pathAttemptId, setPathAttemptId] = useState<string | null>(null);
   const [walletType, setWalletType] = useState<string | null>(null);
+  const [isRetry, setIsRetry] = useState(false);
+  const [forkPoint, setForkPoint] = useState<string | null>(null);
+  const [rejectedDiagnoses, setRejectedDiagnoses] = useState<string[]>([]);
 
-  // Get the path attempt ID from sessionStorage
+  // Get the path attempt ID and retry info from sessionStorage
   useEffect(() => {
     const storedPathAttemptId = sessionStorage.getItem('howwasihacked_path_attempt_id');
     if (storedPathAttemptId) {
       setPathAttemptId(storedPathAttemptId);
+    }
+
+    // Check for retry info
+    const storedIsRetry = sessionStorage.getItem('howwasihacked_is_retry');
+    if (storedIsRetry === 'true') {
+      setIsRetry(true);
+      // Clear the retry flag so it doesn't persist across sessions
+      sessionStorage.removeItem('howwasihacked_is_retry');
+    }
+
+    const storedForkPoint = sessionStorage.getItem('howwasihacked_fork_point');
+    if (storedForkPoint) {
+      setForkPoint(storedForkPoint);
+      sessionStorage.removeItem('howwasihacked_fork_point');
+    }
+
+    const storedRejectedDiagnoses = sessionStorage.getItem('howwasihacked_rejected_diagnoses');
+    if (storedRejectedDiagnoses) {
+      try {
+        setRejectedDiagnoses(JSON.parse(storedRejectedDiagnoses));
+      } catch {
+        // Ignore parse errors
+      }
     }
 
     // Fetch session to get wallet type
@@ -93,10 +119,21 @@ export default function PathAPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
+      {/* Show retry message if this is a retry */}
+      {isRetry && (
+        <div className="mb-8 rounded-xl bg-[var(--card-bg)] border border-[var(--border)] p-4 text-center animate-fadeIn">
+          <p className="text-[var(--text-muted)]">
+            Let&apos;s dig a bit deeper to find what happened.
+          </p>
+        </div>
+      )}
       <PathAQuestions
         onStepComplete={handleStepComplete}
         isSubmitting={isSubmitting}
         walletType={walletType}
+        isRetry={isRetry}
+        forkPoint={forkPoint}
+        rejectedDiagnoses={rejectedDiagnoses}
       />
     </div>
   );

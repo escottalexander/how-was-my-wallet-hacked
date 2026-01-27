@@ -13,7 +13,11 @@ export type PathAQuestionId =
   | 'a5a_file_type'
   | 'a5b_file_source'
   | 'a6_wallet_setup'
-  | 'a7_physical_access';
+  | 'a7_physical_access'
+  // Harder retry questions
+  | 'a8_who_has_access'
+  | 'a9_shared_devices'
+  | 'a10_browser_extensions';
 
 // Answer types for each question
 export type A1Answer = 'yes' | 'no' | 'not_sure';
@@ -32,6 +36,10 @@ export type A5aAnswer = 'executable' | 'document' | 'other';
 export type A5bAnswer = 'discord_telegram' | 'email' | 'website' | 'job_application' | 'other';
 export type A6Answer = 'someone_helped' | 'bought_wallet' | 'self_setup';
 export type A7Answer = 'yes' | 'no' | 'not_sure';
+// Harder retry question answers
+export type A8Answer = 'only_me' | 'family' | 'friends' | 'coworkers' | 'online_contacts';
+export type A9Answer = 'yes' | 'no' | 'not_sure';
+export type A10Answer = 'yes' | 'no' | 'not_sure';
 
 interface QuestionOption<T extends string> {
   id: T;
@@ -115,6 +123,30 @@ const A7_OPTIONS: QuestionOption<A7Answer>[] = [
   { id: 'not_sure', label: "I'm not sure", description: 'I haven\'t thought about this' },
 ];
 
+// Harder retry questions
+// A8: Who has access to seed phrase storage (more specific than A7)
+const A8_OPTIONS: QuestionOption<A8Answer>[] = [
+  { id: 'only_me', label: 'Only me', description: 'I\'m certain no one else has ever seen it' },
+  { id: 'family', label: 'Family members', description: 'Family could have access to where I stored it' },
+  { id: 'friends', label: 'Friends', description: 'Friends have been near my storage location' },
+  { id: 'coworkers', label: 'Coworkers', description: 'Work colleagues could have seen it' },
+  { id: 'online_contacts', label: 'Online contacts', description: 'Someone I met online or through crypto' },
+];
+
+// A9: Shared devices question
+const A9_OPTIONS: QuestionOption<A9Answer>[] = [
+  { id: 'yes', label: 'Yes', description: 'I use shared computers or devices' },
+  { id: 'no', label: 'No', description: 'My devices are for my use only' },
+  { id: 'not_sure', label: "I'm not sure", description: 'I haven\'t thought about this' },
+];
+
+// A10: Browser extensions question (for retry)
+const A10_OPTIONS: QuestionOption<A10Answer>[] = [
+  { id: 'yes', label: 'Yes, I have', description: 'I\'ve installed extensions recently' },
+  { id: 'no', label: 'No, not recently', description: 'I haven\'t installed new extensions' },
+  { id: 'not_sure', label: "I'm not sure", description: 'I don\'t remember' },
+];
+
 interface QuestionDisplayProps<T extends string> {
   title: string;
   subtitle?: string;
@@ -184,11 +216,42 @@ interface PathAQuestionsProps {
   onStepComplete: (result: PathAStepResult) => void;
   isSubmitting?: boolean;
   walletType?: string | null;
+  isRetry?: boolean;
+  forkPoint?: string | null;
+  rejectedDiagnoses?: string[];
 }
 
-export function PathAQuestions({ onStepComplete, isSubmitting, walletType }: PathAQuestionsProps) {
-  const [currentQuestion, setCurrentQuestion] = useState<PathAQuestionId>('a1_seed_backup');
+// Map fork points to starting questions
+const FORK_POINT_TO_QUESTION: Record<string, PathAQuestionId> = {
+  seed_backup: 'a1_seed_backup',
+  storage_method: 'a2_storage_method',
+  password_unique: 'a3_password_manager',
+  copy_paste: 'a4_copy_paste',
+  paste_location: 'a4a_where_pasted',
+  downloaded_files: 'a5_downloaded_files',
+  file_type: 'a5a_file_type',
+  file_source: 'a5b_file_source',
+  wallet_setup: 'a6_wallet_setup',
+  physical_access: 'a7_physical_access',
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function PathAQuestions({ onStepComplete, isSubmitting, walletType, isRetry, forkPoint, rejectedDiagnoses }: PathAQuestionsProps) {
+  // Determine starting question based on fork point
+  const getStartingQuestion = (): PathAQuestionId => {
+    if (forkPoint && FORK_POINT_TO_QUESTION[forkPoint]) {
+      return FORK_POINT_TO_QUESTION[forkPoint];
+    }
+    return 'a1_seed_backup';
+  };
+
+  const [currentQuestion, setCurrentQuestion] = useState<PathAQuestionId>(getStartingQuestion());
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+
+  // Helper to check if a diagnosis was already rejected
+  const isDiagnosisRejected = (diagnosisType: string): boolean => {
+    return rejectedDiagnoses?.includes(diagnosisType) || false;
+  };
 
   // Determine next step based on current question and answer
   const getNextStep = (questionId: PathAQuestionId, answer: string): { nextStep: PathAQuestionId | 'diagnosis'; diagnosisType?: string } => {
@@ -199,15 +262,36 @@ export function PathAQuestions({ onStepComplete, isSubmitting, walletType }: Pat
         return { nextStep: 'a2_storage_method' }; // not_sure - ask about storage
 
       case 'a2_storage_method':
-        if (answer === 'cloud_storage') return { nextStep: 'diagnosis', diagnosisType: 'cloud_storage' };
-        if (answer === 'screenshot') return { nextStep: 'diagnosis', diagnosisType: 'phone_storage' };
-        if (answer === 'notes_app') return { nextStep: 'diagnosis', diagnosisType: 'digital_storage' };
+        if (answer === 'cloud_storage') {
+          if (isDiagnosisRejected('cloud_storage')) {
+            // On retry, continue to copy/paste questions instead
+            return { nextStep: 'a4_copy_paste' };
+          }
+          return { nextStep: 'diagnosis', diagnosisType: 'cloud_storage' };
+        }
+        if (answer === 'screenshot') {
+          if (isDiagnosisRejected('phone_storage')) {
+            return { nextStep: 'a4_copy_paste' };
+          }
+          return { nextStep: 'diagnosis', diagnosisType: 'phone_storage' };
+        }
+        if (answer === 'notes_app') {
+          if (isDiagnosisRejected('digital_storage')) {
+            return { nextStep: 'a4_copy_paste' };
+          }
+          return { nextStep: 'diagnosis', diagnosisType: 'digital_storage' };
+        }
         if (answer === 'password_manager') return { nextStep: 'a3_password_manager' };
         if (answer === 'multiple') return { nextStep: 'a4_copy_paste' };
         return { nextStep: 'a4_copy_paste' }; // physical_secure - continue to other questions
 
       case 'a3_password_manager':
-        if (answer === 'no') return { nextStep: 'diagnosis', diagnosisType: 'password_reuse' };
+        if (answer === 'no') {
+          if (isDiagnosisRejected('password_reuse')) {
+            return { nextStep: 'a4_copy_paste' };
+          }
+          return { nextStep: 'diagnosis', diagnosisType: 'password_reuse' };
+        }
         return { nextStep: 'a4_copy_paste' };
 
       case 'a4_copy_paste':
@@ -215,36 +299,135 @@ export function PathAQuestions({ onStepComplete, isSubmitting, walletType }: Pat
         return { nextStep: 'a5_downloaded_files' };
 
       case 'a4a_where_pasted':
-        if (answer === 'website') return { nextStep: 'diagnosis', diagnosisType: 'phishing_fake_site' };
-        if (answer === 'code_file') return { nextStep: 'diagnosis', diagnosisType: 'exposed_in_code' };
+        if (answer === 'website') {
+          if (isDiagnosisRejected('phishing_fake_site')) {
+            // On retry, ask about clipboard compromise instead
+            if (!isDiagnosisRejected('clipboard_compromise')) {
+              return { nextStep: 'diagnosis', diagnosisType: 'clipboard_compromise' };
+            }
+            return { nextStep: 'a5_downloaded_files' };
+          }
+          return { nextStep: 'diagnosis', diagnosisType: 'phishing_fake_site' };
+        }
+        if (answer === 'code_file') {
+          if (isDiagnosisRejected('exposed_in_code')) {
+            return { nextStep: 'a5_downloaded_files' };
+          }
+          return { nextStep: 'diagnosis', diagnosisType: 'exposed_in_code' };
+        }
+        if (answer === 'between_wallets') {
+          if (!isDiagnosisRejected('clipboard_compromise')) {
+            return { nextStep: 'diagnosis', diagnosisType: 'clipboard_compromise' };
+          }
+        }
         return { nextStep: 'a5_downloaded_files' };
 
       case 'a5_downloaded_files':
         if (answer === 'yes') return { nextStep: 'a5a_file_type' };
+        // On retry, add harder questions
+        if (isRetry) {
+          return { nextStep: 'a8_who_has_access' };
+        }
         return { nextStep: 'a6_wallet_setup' };
 
       case 'a5a_file_type':
+        if (answer === 'extension') {
+          if (!isDiagnosisRejected('malicious_extension')) {
+            return { nextStep: 'diagnosis', diagnosisType: 'malicious_extension' };
+          }
+        }
         return { nextStep: 'a5b_file_source' };
 
       case 'a5b_file_source':
-        if (answer === 'discord_telegram') return { nextStep: 'diagnosis', diagnosisType: 'social_engineering_file' };
-        if (answer === 'email') return { nextStep: 'diagnosis', diagnosisType: 'phishing_email' };
-        if (answer === 'website') return { nextStep: 'diagnosis', diagnosisType: 'malicious_download' };
-        if (answer === 'job_application') return { nextStep: 'diagnosis', diagnosisType: 'fake_job_scam' };
-        return { nextStep: 'a6_wallet_setup' };
+        if (answer === 'discord_telegram') {
+          if (isDiagnosisRejected('social_engineering_file')) {
+            return isRetry ? { nextStep: 'a8_who_has_access' } : { nextStep: 'a6_wallet_setup' };
+          }
+          return { nextStep: 'diagnosis', diagnosisType: 'social_engineering_file' };
+        }
+        if (answer === 'email') {
+          if (isDiagnosisRejected('phishing_email')) {
+            return isRetry ? { nextStep: 'a8_who_has_access' } : { nextStep: 'a6_wallet_setup' };
+          }
+          return { nextStep: 'diagnosis', diagnosisType: 'phishing_email' };
+        }
+        if (answer === 'website') {
+          if (isDiagnosisRejected('malicious_download')) {
+            return isRetry ? { nextStep: 'a8_who_has_access' } : { nextStep: 'a6_wallet_setup' };
+          }
+          return { nextStep: 'diagnosis', diagnosisType: 'malicious_download' };
+        }
+        if (answer === 'job_application') {
+          if (isDiagnosisRejected('fake_job_scam')) {
+            return isRetry ? { nextStep: 'a8_who_has_access' } : { nextStep: 'a6_wallet_setup' };
+          }
+          return { nextStep: 'diagnosis', diagnosisType: 'fake_job_scam' };
+        }
+        return isRetry ? { nextStep: 'a8_who_has_access' } : { nextStep: 'a6_wallet_setup' };
 
       case 'a6_wallet_setup':
-        if (answer === 'someone_helped') return { nextStep: 'diagnosis', diagnosisType: 'compromised_setup' };
-        if (answer === 'bought_wallet') return { nextStep: 'diagnosis', diagnosisType: 'purchased_wallet_scam' };
-        // Hardware wallet specific
-        if (walletType === 'hardware') {
-          return { nextStep: 'a7_physical_access' };
+        if (answer === 'someone_helped') {
+          if (isDiagnosisRejected('compromised_setup')) {
+            return isRetry ? { nextStep: 'a9_shared_devices' } : { nextStep: 'a7_physical_access' };
+          }
+          return { nextStep: 'diagnosis', diagnosisType: 'compromised_setup' };
+        }
+        if (answer === 'bought_wallet') {
+          if (isDiagnosisRejected('purchased_wallet_scam')) {
+            return isRetry ? { nextStep: 'a9_shared_devices' } : { nextStep: 'a7_physical_access' };
+          }
+          return { nextStep: 'diagnosis', diagnosisType: 'purchased_wallet_scam' };
+        }
+        // Continue to physical access or harder questions on retry
+        if (isRetry) {
+          return { nextStep: 'a8_who_has_access' };
         }
         return { nextStep: 'a7_physical_access' };
 
       case 'a7_physical_access':
-        if (answer === 'yes') return { nextStep: 'diagnosis', diagnosisType: 'compromised_hardware' };
+        if (answer === 'yes') {
+          if (isDiagnosisRejected('compromised_hardware')) {
+            return isRetry ? { nextStep: 'a9_shared_devices' } : { nextStep: 'diagnosis', diagnosisType: 'unknown' };
+          }
+          return { nextStep: 'diagnosis', diagnosisType: 'compromised_hardware' };
+        }
+        if (isRetry) {
+          return { nextStep: 'a9_shared_devices' };
+        }
         return { nextStep: 'diagnosis', diagnosisType: 'unknown' }; // Fallback
+
+      // Harder retry questions
+      case 'a8_who_has_access':
+        if (answer === 'online_contacts') {
+          // Strong indicator of social engineering
+          if (!isDiagnosisRejected('social_engineering_file')) {
+            return { nextStep: 'diagnosis', diagnosisType: 'social_engineering_file' };
+          }
+        }
+        if (answer === 'family' || answer === 'friends' || answer === 'coworkers') {
+          if (!isDiagnosisRejected('compromised_setup')) {
+            return { nextStep: 'diagnosis', diagnosisType: 'compromised_setup' };
+          }
+        }
+        return { nextStep: 'a9_shared_devices' };
+
+      case 'a9_shared_devices':
+        if (answer === 'yes') {
+          // Could indicate clipboard compromise or malware
+          if (!isDiagnosisRejected('clipboard_compromise')) {
+            return { nextStep: 'diagnosis', diagnosisType: 'clipboard_compromise' };
+          }
+        }
+        return { nextStep: 'a10_browser_extensions' };
+
+      case 'a10_browser_extensions':
+        if (answer === 'yes') {
+          if (!isDiagnosisRejected('malicious_extension')) {
+            return { nextStep: 'diagnosis', diagnosisType: 'malicious_extension' };
+          }
+        }
+        // Final fallback
+        return { nextStep: 'diagnosis', diagnosisType: 'unknown' };
 
       default:
         return { nextStep: 'diagnosis', diagnosisType: 'unknown' };
@@ -392,6 +575,43 @@ export function PathAQuestions({ onStepComplete, isSubmitting, walletType }: Pat
             subtitle="Consider roommates, family members, visitors, or anyone who could have seen it."
             options={A7_OPTIONS}
             selectedAnswer={selectedAnswer as A7Answer | null}
+            onSelect={handleSelect}
+            isSubmitting={isSubmitting}
+          />
+        );
+
+      // Harder retry questions
+      case 'a8_who_has_access':
+        return (
+          <QuestionDisplay
+            title="Who specifically has had access to your seed phrase storage?"
+            subtitle="Think carefully - even brief access could be enough. We're digging deeper to help you find the cause."
+            options={A8_OPTIONS}
+            selectedAnswer={selectedAnswer as A8Answer | null}
+            onSelect={handleSelect}
+            isSubmitting={isSubmitting}
+          />
+        );
+
+      case 'a9_shared_devices':
+        return (
+          <QuestionDisplay
+            title="Do you use shared computers or devices for crypto activities?"
+            subtitle="Public computers, work devices, or computers others have access to."
+            options={A9_OPTIONS}
+            selectedAnswer={selectedAnswer as A9Answer | null}
+            onSelect={handleSelect}
+            isSubmitting={isSubmitting}
+          />
+        );
+
+      case 'a10_browser_extensions':
+        return (
+          <QuestionDisplay
+            title="Have you installed any browser extensions recently?"
+            subtitle="Including wallet extensions, productivity tools, or any other add-ons."
+            options={A10_OPTIONS}
+            selectedAnswer={selectedAnswer as A10Answer | null}
             onSelect={handleSelect}
             isSubmitting={isSubmitting}
           />
