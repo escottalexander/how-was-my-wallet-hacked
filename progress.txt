@@ -166,3 +166,25 @@
   - Next steps: implement /diagnostic/path-b (US-007) and diagnosis screens (US-009+)
 
 ---
+
+## 2026-01-27 - US-007
+- What was implemented: Malicious transaction path (Path B)
+- Files changed:
+  - app/src/components/PathBQuestions.tsx - New component with Path B questions (B1-B2)
+  - app/src/app/diagnostic/path-b/page.tsx - Page that uses PathBQuestions component
+- **Verification performed:**
+  - B1: "How did you find the site or app?" with 5 options (social media, Google search, DM, email, typed URL)
+  - B2: "What were you trying to do?" with 5 options (airdrop, NFT mint, new dApp, token transaction, other)
+  - Each step recorded to PathStep table via PATCH /api/path
+  - Context (how_found, what_doing) stored in sessionStorage for diagnosis messaging
+  - Routes to malicious_transaction diagnosis with context
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - PathBQuestions follows same pattern as PathAQuestions but simpler (only 2 questions)
+  - Component stores B1 answer internally to include as context with B2 completion
+  - PathBStepResult includes optional `context` field for passing extra data to diagnosis
+  - Context stored in sessionStorage as 'howwasihacked_diagnosis_context' (JSON string)
+  - Path B always leads to malicious_transaction diagnosis but context varies by how user found site
+  - Next steps: implement diagnosis screens (US-008+) and probability engine (US-008)
+
+---
