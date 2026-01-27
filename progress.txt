@@ -396,3 +396,27 @@
   - Next steps: US-016 (Mobile optimization and polish)
 
 ---
+
+## 2026-01-27 - US-016
+- What was implemented: Mobile optimization and polish
+- Files changed:
+  - app/src/app/globals.css - Added smooth scroll, font smoothing, overflow-x hidden, touch action manipulation, min-height 44px for buttons, prefers-reduced-motion support
+  - app/src/app/layout.tsx - Added explicit Viewport export for mobile optimization (width, initialScale, maximumScale, userScalable, viewportFit)
+- **Verification performed:**
+  - All screens already used mobile-first responsive design (grid-cols-1 on mobile, sm:grid-cols-2 on larger screens)
+  - Touch-friendly buttons already had min-h-[72px], min-h-[56px], or min-h-[52px] (all > 44px); added global 44px minimum as baseline
+  - Readable text sizes already in place (text-2xl for headings, base size for body)
+  - Smooth transitions already implemented via animate-fadeIn and global transition rules
+  - Added overflow-x: hidden to prevent horizontal scrolling
+  - Mental health app aesthetic maintained (calm purple/blue colors, generous whitespace, smooth animations)
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - The codebase already had excellent mobile-first design from initial setup
+  - Next.js 16 uses exported `viewport` object (not metadata.viewport) for viewport configuration
+  - Import `Viewport` type from "next" for type safety
+  - CSS `touch-action: manipulation` improves tap responsiveness
+  - `-webkit-tap-highlight-color: transparent` removes blue highlight on iOS
+  - `prefers-reduced-motion` media query is important for accessibility
+  - All user stories are now complete!
+
+---
