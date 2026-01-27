@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
 import { getDb } from './db';
-import type { Session, PathAttempt, PathStep, WalletType, ValueRange } from './types';
+import type { Session, PathAttempt, PathStep, Diagnosis, WalletType, ValueRange } from './types';
 
 // Create a hash from IP and User Agent for identifying repeat visitors
 // This is NOT PII - it cannot be reversed to identify the user
@@ -162,4 +162,96 @@ export function getPathSteps(pathAttemptId: string): PathStep[] {
     ORDER BY step_order ASC
   `);
   return stmt.all(pathAttemptId) as PathStep[];
+}
+
+// Create a new diagnosis for a path attempt
+export function createDiagnosis(
+  pathAttemptId: string,
+  diagnosisType: string
+): Diagnosis {
+  const db = getDb();
+  const id = uuidv4();
+  const now = new Date().toISOString();
+
+  const stmt = db.prepare(`
+    INSERT INTO diagnoses (id, path_attempt_id, diagnosis_type, accepted, clicked_learn, clicked_hwr, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  stmt.run(id, pathAttemptId, diagnosisType, 0, 0, 0, now);
+
+  return {
+    id,
+    path_attempt_id: pathAttemptId,
+    diagnosis_type: diagnosisType,
+    accepted: false,
+    clicked_learn: false,
+    clicked_hwr: false,
+    created_at: now,
+  };
+}
+
+// Get diagnosis by ID
+export function getDiagnosis(id: string): Diagnosis | null {
+  const db = getDb();
+  const stmt = db.prepare('SELECT * FROM diagnoses WHERE id = ?');
+  const row = stmt.get(id) as
+    | { id: string; path_attempt_id: string; diagnosis_type: string; accepted: number; clicked_learn: number; clicked_hwr: number; created_at: string }
+    | undefined;
+  if (!row) return null;
+  return {
+    ...row,
+    accepted: Boolean(row.accepted),
+    clicked_learn: Boolean(row.clicked_learn),
+    clicked_hwr: Boolean(row.clicked_hwr),
+  };
+}
+
+// Get diagnosis by path attempt ID
+export function getDiagnosisByPathAttempt(pathAttemptId: string): Diagnosis | null {
+  const db = getDb();
+  const stmt = db.prepare('SELECT * FROM diagnoses WHERE path_attempt_id = ? ORDER BY created_at DESC LIMIT 1');
+  const row = stmt.get(pathAttemptId) as
+    | { id: string; path_attempt_id: string; diagnosis_type: string; accepted: number; clicked_learn: number; clicked_hwr: number; created_at: string }
+    | undefined;
+  if (!row) return null;
+  return {
+    ...row,
+    accepted: Boolean(row.accepted),
+    clicked_learn: Boolean(row.clicked_learn),
+    clicked_hwr: Boolean(row.clicked_hwr),
+  };
+}
+
+// Update diagnosis accepted status
+export function updateDiagnosisAccepted(id: string, accepted: boolean): void {
+  const db = getDb();
+  const stmt = db.prepare(`
+    UPDATE diagnoses
+    SET accepted = ?
+    WHERE id = ?
+  `);
+  stmt.run(accepted ? 1 : 0, id);
+}
+
+// Update diagnosis clicked_learn status
+export function updateDiagnosisClickedLearn(id: string): void {
+  const db = getDb();
+  const stmt = db.prepare(`
+    UPDATE diagnoses
+    SET clicked_learn = 1
+    WHERE id = ?
+  `);
+  stmt.run(id);
+}
+
+// Update diagnosis clicked_hwr status
+export function updateDiagnosisClickedHwr(id: string): void {
+  const db = getDb();
+  const stmt = db.prepare(`
+    UPDATE diagnoses
+    SET clicked_hwr = 1
+    WHERE id = ?
+  `);
+  stmt.run(id);
 }
