@@ -279,3 +279,268 @@ export function getPathAttemptsForSession(sessionId: string): PathAttempt[] {
   `);
   return stmt.all(sessionId) as PathAttempt[];
 }
+
+// ==========================================
+// ANALYTICS QUERY FUNCTIONS
+// ==========================================
+
+export interface DiagnosisByWalletType {
+  wallet_type: string;
+  diagnosis_type: string;
+  count: number;
+}
+
+export interface DiagnosisByValueRange {
+  value_range: string;
+  diagnosis_type: string;
+  count: number;
+}
+
+export interface PathAttemptStats {
+  avg_attempts_before_accept: number;
+  total_sessions_with_diagnosis: number;
+  sessions_accepted_first_try: number;
+  sessions_with_multiple_attempts: number;
+}
+
+export interface DropOffPoint {
+  question_id: string;
+  drop_off_count: number;
+  total_reached: number;
+  drop_off_rate: number;
+}
+
+export interface EngagementStats {
+  total_diagnoses: number;
+  clicked_learn_count: number;
+  clicked_hwr_count: number;
+  learn_click_rate: number;
+  hwr_click_rate: number;
+}
+
+export interface DiagnosisTrend {
+  date: string;
+  diagnosis_type: string;
+  count: number;
+}
+
+export interface RepeatVisitorStats {
+  total_unique_visitors: number;
+  repeat_visitors: number;
+  repeat_rate: number;
+}
+
+// Get most common diagnosis by wallet type
+export function getDiagnosisByWalletType(): DiagnosisByWalletType[] {
+  const db = getDb();
+  const stmt = db.prepare(`
+    SELECT
+      s.wallet_type,
+      d.diagnosis_type,
+      COUNT(*) as count
+    FROM diagnoses d
+    JOIN path_attempts pa ON d.path_attempt_id = pa.id
+    JOIN sessions s ON pa.session_id = s.id
+    WHERE s.wallet_type IS NOT NULL
+      AND d.accepted = 1
+    GROUP BY s.wallet_type, d.diagnosis_type
+    ORDER BY s.wallet_type, count DESC
+  `);
+  return stmt.all() as DiagnosisByWalletType[];
+}
+
+// Get most common diagnosis by value range
+export function getDiagnosisByValueRange(): DiagnosisByValueRange[] {
+  const db = getDb();
+  const stmt = db.prepare(`
+    SELECT
+      s.value_range,
+      d.diagnosis_type,
+      COUNT(*) as count
+    FROM diagnoses d
+    JOIN path_attempts pa ON d.path_attempt_id = pa.id
+    JOIN sessions s ON pa.session_id = s.id
+    WHERE s.value_range IS NOT NULL
+      AND d.accepted = 1
+    GROUP BY s.value_range, d.diagnosis_type
+    ORDER BY s.value_range, count DESC
+  `);
+  return stmt.all() as DiagnosisByValueRange[];
+}
+
+// Get average number of path attempts before accepting diagnosis
+export function getPathAttemptStats(): PathAttemptStats {
+  const db = getDb();
+
+  // Get sessions where a diagnosis was accepted
+  const avgStmt = db.prepare(`
+    SELECT
+      AVG(pa.attempt_number) as avg_attempts,
+      COUNT(DISTINCT pa.session_id) as total_sessions
+    FROM diagnoses d
+    JOIN path_attempts pa ON d.path_attempt_id = pa.id
+    WHERE d.accepted = 1
+  `);
+  const avgResult = avgStmt.get() as { avg_attempts: number | null; total_sessions: number };
+
+  // Get sessions that accepted on first try
+  const firstTryStmt = db.prepare(`
+    SELECT COUNT(DISTINCT pa.session_id) as count
+    FROM diagnoses d
+    JOIN path_attempts pa ON d.path_attempt_id = pa.id
+    WHERE d.accepted = 1 AND pa.attempt_number = 1
+  `);
+  const firstTryResult = firstTryStmt.get() as { count: number };
+
+  // Get sessions with multiple attempts
+  const multipleStmt = db.prepare(`
+    SELECT COUNT(DISTINCT pa.session_id) as count
+    FROM diagnoses d
+    JOIN path_attempts pa ON d.path_attempt_id = pa.id
+    WHERE d.accepted = 1 AND pa.attempt_number > 1
+  `);
+  const multipleResult = multipleStmt.get() as { count: number };
+
+  return {
+    avg_attempts_before_accept: avgResult.avg_attempts ?? 0,
+    total_sessions_with_diagnosis: avgResult.total_sessions,
+    sessions_accepted_first_try: firstTryResult.count,
+    sessions_with_multiple_attempts: multipleResult.count,
+  };
+}
+
+// Get drop-off points in the flow
+export function getDropOffPoints(): DropOffPoint[] {
+  const db = getDb();
+
+  // Get counts for each question reached
+  const reachedStmt = db.prepare(`
+    SELECT
+      question_id,
+      COUNT(*) as total_reached
+    FROM path_steps
+    GROUP BY question_id
+  `);
+  const reached = reachedStmt.all() as { question_id: string; total_reached: number }[];
+
+  // Get counts for sessions that completed a diagnosis after each question
+  const completedStmt = db.prepare(`
+    SELECT
+      ps.question_id,
+      COUNT(DISTINCT pa.session_id) as completed
+    FROM path_steps ps
+    JOIN path_attempts pa ON ps.path_attempt_id = pa.id
+    JOIN diagnoses d ON d.path_attempt_id = pa.id
+    GROUP BY ps.question_id
+  `);
+  const completed = completedStmt.all() as { question_id: string; completed: number }[];
+
+  const completedMap = new Map(completed.map(c => [c.question_id, c.completed]));
+
+  return reached.map(r => {
+    const completedCount = completedMap.get(r.question_id) ?? 0;
+    const dropOffCount = r.total_reached - completedCount;
+    return {
+      question_id: r.question_id,
+      drop_off_count: dropOffCount,
+      total_reached: r.total_reached,
+      drop_off_rate: r.total_reached > 0 ? dropOffCount / r.total_reached : 0,
+    };
+  }).sort((a, b) => b.drop_off_rate - a.drop_off_rate);
+}
+
+// Get Learn section and HWR engagement stats
+export function getEngagementStats(): EngagementStats {
+  const db = getDb();
+  const stmt = db.prepare(`
+    SELECT
+      COUNT(*) as total_diagnoses,
+      SUM(clicked_learn) as clicked_learn_count,
+      SUM(clicked_hwr) as clicked_hwr_count
+    FROM diagnoses
+  `);
+  const result = stmt.get() as {
+    total_diagnoses: number;
+    clicked_learn_count: number;
+    clicked_hwr_count: number;
+  };
+
+  return {
+    total_diagnoses: result.total_diagnoses,
+    clicked_learn_count: result.clicked_learn_count ?? 0,
+    clicked_hwr_count: result.clicked_hwr_count ?? 0,
+    learn_click_rate: result.total_diagnoses > 0
+      ? (result.clicked_learn_count ?? 0) / result.total_diagnoses
+      : 0,
+    hwr_click_rate: result.total_diagnoses > 0
+      ? (result.clicked_hwr_count ?? 0) / result.total_diagnoses
+      : 0,
+  };
+}
+
+// Get diagnosis trends over time (grouped by day)
+export function getDiagnosisTrends(days: number = 30): DiagnosisTrend[] {
+  const db = getDb();
+  const stmt = db.prepare(`
+    SELECT
+      date(created_at) as date,
+      diagnosis_type,
+      COUNT(*) as count
+    FROM diagnoses
+    WHERE created_at >= date('now', '-' || ? || ' days')
+    GROUP BY date(created_at), diagnosis_type
+    ORDER BY date ASC, count DESC
+  `);
+  return stmt.all(days) as DiagnosisTrend[];
+}
+
+// Get repeat visitor statistics
+export function getRepeatVisitorStats(): RepeatVisitorStats {
+  const db = getDb();
+
+  // Total unique visitors (by user_hash)
+  const totalStmt = db.prepare(`
+    SELECT COUNT(DISTINCT user_hash) as count FROM sessions
+  `);
+  const totalResult = totalStmt.get() as { count: number };
+
+  // Users with multiple sessions
+  const repeatStmt = db.prepare(`
+    SELECT COUNT(*) as count FROM (
+      SELECT user_hash FROM sessions GROUP BY user_hash HAVING COUNT(*) > 1
+    )
+  `);
+  const repeatResult = repeatStmt.get() as { count: number };
+
+  return {
+    total_unique_visitors: totalResult.count,
+    repeat_visitors: repeatResult.count,
+    repeat_rate: totalResult.count > 0 ? repeatResult.count / totalResult.count : 0,
+  };
+}
+
+// Get full path for a path attempt in order
+export function getFullPath(pathAttemptId: string): PathStep[] {
+  const db = getDb();
+  const stmt = db.prepare(`
+    SELECT * FROM path_steps
+    WHERE path_attempt_id = ?
+    ORDER BY step_order ASC
+  `);
+  return stmt.all(pathAttemptId) as PathStep[];
+}
+
+// Get all paths for a session with their diagnoses
+export function getSessionPaths(sessionId: string): {
+  pathAttempt: PathAttempt;
+  steps: PathStep[];
+  diagnosis: Diagnosis | null;
+}[] {
+  const pathAttempts = getPathAttemptsForSession(sessionId);
+
+  return pathAttempts.map(pa => ({
+    pathAttempt: pa,
+    steps: getFullPath(pa.id),
+    diagnosis: getDiagnosisByPathAttempt(pa.id),
+  }));
+}
