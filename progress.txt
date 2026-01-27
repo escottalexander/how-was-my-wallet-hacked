@@ -188,3 +188,35 @@
   - Next steps: implement diagnosis screens (US-008+) and probability engine (US-008)
 
 ---
+
+## 2026-01-27 - US-008
+- What was implemented: Probability engine
+- Files changed:
+  - app/src/lib/probability.ts - New probability engine with weights, multipliers, and calculation functions
+  - app/src/app/api/probability/route.ts - API endpoint for probability calculations
+- **Verification performed:**
+  - Initial probability weights configured per PRD (Cloud Storage 20%, Phone Storage 15%, etc.)
+  - Wallet type adjusts probabilities (e.g., hardware wallet: malicious_transaction 2x, cloud_storage 0.7x, malicious_extension 0.3x)
+  - Each answer adjusts relevant diagnosis probabilities via ANSWER_MULTIPLIERS map
+  - When diagnosis rejected, rejectDiagnosis() applies 0.1x multiplier
+  - getLastForkPoint() determines where to restart after rejection based on diagnosis type
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - DiagnosisType union type includes all 17 diagnosis types (including 'unknown' fallback)
+  - BASE_WEIGHTS map stores initial weights per PRD
+  - WALLET_TYPE_MULTIPLIERS adjust based on wallet selection
+  - ANSWER_MULTIPLIERS keyed by question_id → answer → diagnosis adjustments
+  - ProbabilityState tracks both weights and rejectedDiagnoses array
+  - Key functions:
+    - createInitialProbabilities(walletType) - initialize with wallet-type adjustments
+    - applyAnswerAdjustment(state, questionId, answer) - apply single answer
+    - applyPathSteps(state, steps) - apply all path steps
+    - rejectDiagnosis(state, diagnosisType) - mark diagnosis rejected (0.1x)
+    - getMostLikelyDiagnosis(state) - get top diagnosis
+    - getTopDiagnoses(state, n) - get top N diagnoses with probabilities
+    - suggestPathBranch(state) - returns 'path-a' or 'path-b' based on weights
+    - getLastForkPoint(diagnosis, steps) - find restart point after rejection
+  - API at /api/probability: POST calculates probabilities, GET returns suggested path/fork point
+  - Next steps: implement diagnosis screens (US-009+) that use these probabilities
+
+---
