@@ -272,3 +272,24 @@
   - Next steps: US-011 (setup/transaction diagnoses - also likely already done)
 
 ---
+
+## 2026-01-27 - US-011
+- What was implemented: All setup and transaction related diagnosis screens were already implemented in US-009
+- Files changed: None (functionality already existed in DiagnosisScreen.tsx)
+- **Verification performed:**
+  - compromised_setup: Present with copy per PRD (lines 191-204)
+  - purchased_wallet_scam: Present with copy per PRD (lines 205-218)
+  - compromised_hardware: Present with copy per PRD (lines 219-232)
+  - malicious_transaction: Present with context variations via MALICIOUS_TX_CONTEXT (lines 233-278)
+    - social_media, google_search, dm, email, typed_url contexts all present
+  - unknown: Final fallback screen present with encouragement to learn (lines 249-264)
+  - Link to revoke.cash on malicious_transaction diagnosis (lines 245-247)
+  - All screens follow same format: title, mainCopy, empathy, actionItems, externalLinks
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - US-009 implementation was comprehensive and included ALL 17 diagnosis types from the PRD
+  - Future stories that involve diagnosis screens should first check DiagnosisScreen.tsx as it may already have the content
+  - MALICIOUS_TX_CONTEXT provides how_found-specific messaging for malicious transaction diagnoses
+  - Next steps: US-012 (path rejection and retry flow)
+
+---
