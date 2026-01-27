@@ -364,3 +364,35 @@
   - Next steps: US-015 (Analytics tracking completion)
 
 ---
+
+## 2026-01-27 - US-015
+- What was implemented: Analytics tracking completion
+- Files changed:
+  - app/src/lib/session.ts - Added 10 analytics query functions and TypeScript interfaces
+  - app/src/app/api/analytics/route.ts - New API endpoint for retrieving analytics data
+- **Verification performed:**
+  - Click to Learn section tracked via Diagnosis.clicked_learn (already implemented in US-009)
+  - Click to HackedWalletRecovery.com tracked via Diagnosis.clicked_hwr (already implemented in US-009)
+  - Full path recorded via getFullPath() and getSessionPaths() functions
+  - Multiple path attempts tracked with attempt_number - getPathAttemptStats() returns avg_attempts_before_accept
+  - Repeat visitors identified by user_hash via getRepeatVisitorStats()
+  - All PRD analytics queries implemented:
+    - getDiagnosisByWalletType() - Most common diagnosis by wallet type
+    - getDiagnosisByValueRange() - Most common diagnosis by value range
+    - getPathAttemptStats() - Average attempts before accepting, first-try acceptance rate
+    - getDropOffPoints() - Drop-off points in the flow with drop-off rate
+    - getEngagementStats() - Learn section and HWR click-through rates
+    - getDiagnosisTrends() - Diagnosis trends over time (configurable days)
+    - getRepeatVisitorStats() - Repeat visitor identification and rate
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - Analytics API at /api/analytics supports query param `type`:
+    - 'all' (default) - returns all analytics data
+    - 'by_wallet_type', 'by_value_range', 'path_attempts', 'drop_off', 'engagement', 'trends', 'repeat_visitors', 'session_paths'
+  - For trends, pass `days` query param (default 30)
+  - For session_paths, pass `sessionId` query param
+  - Click tracking was already implemented in diagnosis page (handleLearnClick, handleHwrClick functions)
+  - Session path data accessible via getSessionPaths(sessionId) which returns path attempts with steps and diagnoses
+  - Next steps: US-016 (Mobile optimization and polish)
+
+---
