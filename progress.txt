@@ -343,3 +343,24 @@
   - Next steps: US-014 (Learn Best Practices section - wallet architecture)
 
 ---
+
+## 2026-01-27 - US-014
+- What was implemented: Learn Best Practices section - wallet architecture topics
+- Files changed:
+  - app/src/app/learn/page.tsx - Added 4 new topics: hot-cold, multisig, after-hacked, checklist
+- **Verification performed:**
+  - Hot/Cold Wallet Model topic present with checking vs savings analogy
+  - Multisig: The Gold Standard topic present with 2-of-3 concept and link to safe.global
+  - What To Do After Being Hacked topic present with 6 immediate steps
+  - Security Checklist topic present with actionable items in 4 categories (seed phrase, wallet architecture, browsing, account security)
+  - Link to HackedWalletRecovery.com already present at bottom of page (from US-013)
+  - TopicId type extended to include new topic IDs
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - TopicId type now includes 8 values: 'seed-phrase' | 'scams' | 'browsing' | 'approvals' | 'hot-cold' | 'multisig' | 'after-hacked' | 'checklist'
+  - New topics follow same pattern as existing ones: title, content (React node)
+  - External links use same styling: rounded-xl card with border, primary color link with arrow
+  - Checklist items use unicode checkbox ☐ for visual consistency
+  - Next steps: US-015 (Analytics tracking completion)
+
+---
