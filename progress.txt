@@ -293,3 +293,32 @@
   - Next steps: US-012 (path rejection and retry flow)
 
 ---
+
+## 2026-01-27 - US-012
+- What was implemented: Path rejection and retry flow
+- Files changed:
+  - app/src/lib/session.ts - Added getRejectedDiagnosesForSession() and getPathAttemptsForSession() functions
+  - app/src/app/api/probability/route.ts - Updated GET endpoint to include rejected diagnoses in probability calculations
+  - app/src/app/diagnostic/diagnosis/page.tsx - Updated handleReject to use probability-based fork point routing
+  - app/src/components/PathAQuestions.tsx - Added 3 harder retry questions (a8_who_has_access, a9_shared_devices, a10_browser_extensions), updated getNextStep to skip rejected diagnoses
+  - app/src/app/diagnostic/path-a/page.tsx - Added support for isRetry, forkPoint, and rejectedDiagnoses props
+- **Verification performed:**
+  - 'This doesn't seem right' button present on all diagnosis screens (already existed from US-009)
+  - Rejection recorded via PATCH /api/diagnosis with accepted=false
+  - New PathAttempt created with incremented attempt_number on rejection
+  - Fork point calculated via getLastForkPoint() based on rejected diagnosis type
+  - Rejected diagnoses tracked via getRejectedDiagnosesForSession() and applied with 0.1x multiplier
+  - Harder follow-up questions on retry: "Who specifically has had access?", "Shared devices?", "Browser extensions?"
+  - When a diagnosis is rejected, subsequent paths skip that diagnosis and continue to alternatives
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - Session storage keys for retry flow:
+    - howwasihacked_is_retry: 'true' when user rejected a diagnosis
+    - howwasihacked_fork_point: question ID to start from on retry
+    - howwasihacked_rejected_diagnoses: JSON array of rejected diagnosis types
+  - Fork point mapping in PathAQuestions connects probability.ts fork point names to PathA question IDs
+  - getNextStep now checks isDiagnosisRejected() before returning a diagnosis, routing to alternatives if rejected
+  - Harder questions (a8-a10) only shown on retry (isRetry=true) to dig deeper into potential causes
+  - Next steps: US-013 (Learn Best Practices section - core security)
+
+---
