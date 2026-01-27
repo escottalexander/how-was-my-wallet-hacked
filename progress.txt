@@ -250,3 +250,25 @@
   - Next steps: US-010 (phishing/social engineering diagnoses), US-011 (setup/transaction diagnoses), US-012 (path rejection flow)
 
 ---
+
+## 2026-01-27 - US-010
+- What was implemented: All phishing and social engineering diagnosis screens were already implemented in US-009
+- Files changed: None (functionality already existed in DiagnosisScreen.tsx)
+- **Verification performed:**
+  - phishing_fake_site: Present with copy per PRD (lines 73-86)
+  - exposed_in_code: Present with copy per PRD (lines 87-100)
+  - clipboard_compromise: Present with copy per PRD (lines 101-114)
+  - social_engineering_file: Present with Discord/Telegram context (lines 115-129)
+  - phishing_email: Present with copy per PRD (lines 130-144)
+  - malicious_download: Present with copy per PRD (lines 145-159)
+  - fake_job_scam: Present with copy per PRD (lines 160-175)
+  - malicious_extension: Present with copy per PRD (lines 176-190)
+  - All screens follow same format: title, mainCopy, empathy, actionItems, externalLinks
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - US-009 implementation was comprehensive and included all diagnosis types from the PRD
+  - DiagnosisScreen.tsx contains ALL 17 diagnosis types, not just seed phrase related ones
+  - When implementing diagnosis screens, consider doing all at once as they share structure
+  - Next steps: US-011 (setup/transaction diagnoses - also likely already done)
+
+---
