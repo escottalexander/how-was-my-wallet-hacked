@@ -124,3 +124,45 @@
   - Next steps: implement /diagnostic/path-a (US-006) and /diagnostic/path-b (US-007)
 
 ---
+
+## 2026-01-27 - US-006
+- What was implemented: Seed phrase compromise path (Path A)
+- Files changed:
+  - app/src/components/PathAQuestions.tsx - New component with all Path A questions (A1-A7 + follow-ups)
+  - app/src/app/diagnostic/path-a/page.tsx - Page that uses PathAQuestions component
+- **Verification performed:**
+  - A1: Seed phrase backup question with Yes/No/Not sure options
+  - A2: Storage method question with 6 options (physical, screenshot, notes, cloud, password manager, multiple)
+  - A3: Password manager follow-up about unique passwords
+  - A4: Copy/paste habits question
+  - A4a: Where pasted follow-up (website, code file, between wallets, other)
+  - A5: Downloaded files question
+  - A5a: File type follow-up (executable, document, other)
+  - A5b: File source follow-up (Discord/Telegram, email, website, job application, other)
+  - A6: Wallet setup question (someone helped, bought wallet, self setup)
+  - A7: Physical access fallback question
+  - Each step recorded to PathStep table via PATCH /api/path
+  - Branching logic routes to appropriate diagnosis types
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - PathAQuestions is a self-contained state machine with internal question flow
+  - Component reports step completion via onStepComplete callback with {questionId, answer, nextStep, diagnosisType}
+  - When nextStep === 'diagnosis', the page navigates to /diagnostic/diagnosis with diagnosis type in sessionStorage
+  - Diagnosis type stored in sessionStorage as 'howwasihacked_diagnosis_type'
+  - Wallet type passed to component to enable wallet-specific logic (e.g., hardware wallet questions)
+  - Question-to-diagnosis mapping:
+    - cloud_storage, screenshot → direct diagnosis
+    - notes_app → digital_storage diagnosis
+    - password_manager + password reuse → password_reuse diagnosis
+    - pasted on website → phishing_fake_site
+    - pasted in code → exposed_in_code
+    - file from discord/telegram → social_engineering_file
+    - file from email → phishing_email
+    - file from website → malicious_download
+    - file from job application → fake_job_scam
+    - someone helped setup → compromised_setup
+    - bought wallet secondhand → purchased_wallet_scam
+    - physical access → compromised_hardware
+  - Next steps: implement /diagnostic/path-b (US-007) and diagnosis screens (US-009+)
+
+---
