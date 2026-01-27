@@ -322,3 +322,24 @@
   - Next steps: US-013 (Learn Best Practices section - core security)
 
 ---
+
+## 2026-01-27 - US-013
+- What was implemented: All core security topics for the Learn Best Practices section were already implemented
+- Files changed: None (functionality already existed in app/src/app/learn/page.tsx)
+- **Verification performed:**
+  - Section accessible from nav header at all times (layout.tsx line 40-45: Link to /learn)
+  - Section accessible from all diagnosis screens (DiagnosisScreen.tsx line 381-386: Learn Best Practices button)
+  - Seed Phrase Security topic present with copy per PRD (lines 14-58)
+  - Recognizing Scams topic present with all scam types per PRD (lines 60-113)
+  - Safe Browsing Habits topic present with all tips per PRD (lines 115-154)
+  - Understanding Approvals topic present with link to revoke.cash (lines 156-202)
+  - Mobile-friendly accordion layout with expandable sections
+  - Link to HackedWalletRecovery.com at bottom of page
+  - Typecheck passes, lint passes
+- **Learnings for future iterations:**
+  - Learn page uses expandable accordion pattern (useState for expandedTopic)
+  - Topics stored in TOPICS array with id, title, and content (React nodes)
+  - Each topic uses TopicId type: 'seed-phrase' | 'scams' | 'browsing' | 'approvals'
+  - Next steps: US-014 (Learn Best Practices section - wallet architecture)
+
+---
