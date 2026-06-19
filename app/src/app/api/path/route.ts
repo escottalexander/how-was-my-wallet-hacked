@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   createPathAttempt,
   createPathStep,
+  completePathAttempt,
   getLatestPathAttempt,
   getPathAttempt,
   getPathSteps,
@@ -95,20 +96,19 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PATCH: Add a new step to an existing path attempt
+// PATCH: Add a new step to an existing path attempt, or mark it complete
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { pathAttemptId, questionId, answerSelected } = body;
+    const { pathAttemptId, questionId, answerSelected, complete } = body;
 
-    if (!pathAttemptId || !questionId || !answerSelected) {
+    if (!pathAttemptId) {
       return NextResponse.json(
-        { error: 'Path attempt ID, question ID, and answer are required' },
+        { error: 'Path attempt ID is required' },
         { status: 400 }
       );
     }
 
-    // Verify path attempt exists
     const pathAttempt = getPathAttempt(pathAttemptId);
     if (!pathAttempt) {
       return NextResponse.json(
@@ -117,14 +117,25 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Create the step
-    const pathStep = createPathStep(pathAttemptId, questionId, answerSelected);
+    // Mark the attempt as completed
+    if (complete === true) {
+      completePathAttempt(pathAttemptId);
+      return NextResponse.json({ completed: true });
+    }
 
+    if (!questionId || !answerSelected) {
+      return NextResponse.json(
+        { error: 'question ID and answer are required' },
+        { status: 400 }
+      );
+    }
+
+    const pathStep = createPathStep(pathAttemptId, questionId, answerSelected);
     return NextResponse.json({ pathStep });
   } catch (error) {
-    console.error('Error adding path step:', error);
+    console.error('Error in path PATCH:', error);
     return NextResponse.json(
-      { error: 'Failed to add path step' },
+      { error: 'Failed to update path attempt' },
       { status: 500 }
     );
   }

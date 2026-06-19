@@ -25,6 +25,16 @@ export interface PathAttempt {
   session_id: string;
   attempt_number: number;
   created_at: string;
+  completed_at: string | null;
+}
+
+export interface ClusterStat {
+  wallet: string;
+  generation_period: string;
+  diagnosis: string;
+  count: number;
+  first_seen: string;
+  last_seen: string;
 }
 
 export interface PathStep {

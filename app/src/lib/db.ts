@@ -93,6 +93,19 @@ function initializeSchema(database: Database.Database): void {
   database.exec(`
     CREATE INDEX IF NOT EXISTS idx_diagnoses_type ON diagnoses(diagnosis_type)
   `);
+
+  // Add completed_at to path_attempts if it doesn't exist (idempotent migration)
+  const columns = database
+    .prepare("PRAGMA table_info(path_attempts)")
+    .all() as Array<{ name: string }>;
+  if (!columns.some((c) => c.name === 'completed_at')) {
+    database.exec(`ALTER TABLE path_attempts ADD COLUMN completed_at TEXT`);
+  }
+
+  // Index for analytics queries on path_steps by question
+  database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_path_steps_question ON path_steps(question_id)
+  `);
 }
 
 // Close database connection (for cleanup)

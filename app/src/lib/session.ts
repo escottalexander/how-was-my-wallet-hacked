@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
 import { getDb } from './db';
-import type { Session, PathAttempt, PathStep, Diagnosis, WalletType, ValueRange } from './types';
+import type { Session, PathAttempt, PathStep, Diagnosis, WalletType, ValueRange, ClusterStat } from './types';
 
 // Create a hash from IP and User Agent for identifying repeat visitors
 // This is NOT PII - it cannot be reversed to identify the user
@@ -97,6 +97,7 @@ export function createPathAttempt(sessionId: string): PathAttempt {
     session_id: sessionId,
     attempt_number: attemptNumber,
     created_at: now,
+    completed_at: null,
   };
 }
 
@@ -528,6 +529,41 @@ export function getFullPath(pathAttemptId: string): PathStep[] {
     ORDER BY step_order ASC
   `);
   return stmt.all(pathAttemptId) as PathStep[];
+}
+
+// Mark a path attempt as completed
+export function completePathAttempt(id: string): void {
+  const db = getDb();
+  const stmt = db.prepare(`
+    UPDATE path_attempts SET completed_at = datetime('now') WHERE id = ?
+  `);
+  stmt.run(id);
+}
+
+// Get cluster stats: diagnoses grouped by wallet + generation period
+export function getClusterStats(): ClusterStat[] {
+  const db = getDb();
+  const stmt = db.prepare(`
+    SELECT
+      ps_wallet.answer_selected AS wallet,
+      ps_date.answer_selected   AS generation_period,
+      d.diagnosis_type          AS diagnosis,
+      COUNT(*)                  AS count,
+      MIN(pa.created_at)        AS first_seen,
+      MAX(pa.created_at)        AS last_seen
+    FROM path_attempts pa
+    JOIN path_steps ps_wallet ON ps_wallet.path_attempt_id = pa.id
+      AND ps_wallet.question_id = 'wallet_generated'
+    JOIN path_steps ps_date ON ps_date.path_attempt_id = pa.id
+      AND ps_date.question_id = 'key_generation_date'
+    JOIN diagnoses d ON d.path_attempt_id = pa.id
+    WHERE pa.completed_at IS NOT NULL
+      AND ps_date.answer_selected != 'unknown'
+    GROUP BY wallet, generation_period, diagnosis
+    HAVING COUNT(*) > 1
+    ORDER BY COUNT(*) DESC
+  `);
+  return stmt.all() as ClusterStat[];
 }
 
 // Get all paths for a session with their diagnoses

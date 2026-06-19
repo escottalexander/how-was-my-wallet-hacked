@@ -83,6 +83,12 @@ export async function PATCH(request: NextRequest) {
     // Update wallet information if provided
     if (walletType) {
       updateSessionWallet(sessionId, walletType as WalletType, walletSpecific ?? null);
+    } else if (walletSpecific !== undefined) {
+      // wallet_generated question: update specific wallet app without changing wallet type
+      const current = getSession(sessionId);
+      if (current?.wallet_type) {
+        updateSessionWallet(sessionId, current.wallet_type, walletSpecific);
+      }
     }
 
     // Update value range if provided

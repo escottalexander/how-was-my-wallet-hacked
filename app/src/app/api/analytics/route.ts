@@ -8,6 +8,7 @@ import {
   getDiagnosisTrends,
   getRepeatVisitorStats,
   getSessionPaths,
+  getClusterStats,
 } from '@/lib/session';
 
 // GET: Retrieve analytics data
@@ -67,6 +68,11 @@ export async function GET(request: NextRequest) {
         }
         return NextResponse.json({
           sessionPaths: getSessionPaths(sessionId),
+        });
+
+      case 'clusters':
+        return NextResponse.json({
+          clusters: getClusterStats(),
         });
 
       case 'all':
