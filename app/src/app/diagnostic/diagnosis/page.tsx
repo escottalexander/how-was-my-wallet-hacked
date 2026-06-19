@@ -1,115 +1,128 @@
 'use client';
 
-import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@/components/SessionProvider';
 import { DiagnosisScreen } from '@/components/DiagnosisScreen';
 import type { DiagnosisType } from '@/lib/probability';
+import {
+  createInitialProbabilities,
+  applyAnswerAdjustment,
+  rejectDiagnosis,
+  getMostLikelyDiagnosis,
+} from '@/lib/probability';
+import type { AnswerMap } from '@/lib/questions';
+import type { WalletType } from '@/lib/types';
 
-interface DiagnosisState {
+interface StoredDiagnosisState {
   pathAttemptId: string;
   diagnosisType: DiagnosisType;
   context: { howFound?: string; whatDoing?: string } | null;
+  answers: AnswerMap;
 }
 
-// Use useSyncExternalStore to read from sessionStorage without triggering the lint rule
-function useSessionStorageState(): DiagnosisState | null {
-  const subscribe = (callback: () => void) => {
-    // sessionStorage doesn't have events, but we only need the initial value
-    return () => {
-      callback();
-    };
-  };
+function useStoredDiagnosisState(): StoredDiagnosisState | null {
+  const cacheRef = useRef<{ raw: string; value: StoredDiagnosisState | null } | null>(null);
 
-  const getSnapshot = (): DiagnosisState | null => {
+  const subscribe = useCallback((onStoreChange: () => void) => {
+    void onStoreChange;
+    return () => {};
+  }, []);
+
+  const getSnapshot = useCallback((): StoredDiagnosisState | null => {
     if (typeof window === 'undefined') return null;
 
-    const storedPathAttemptId = sessionStorage.getItem('howwasihacked_path_attempt_id');
-    const storedDiagnosisType = sessionStorage.getItem('howwasihacked_diagnosis_type');
-    const storedContext = sessionStorage.getItem('howwasihacked_diagnosis_context');
+    const pathAttemptId = sessionStorage.getItem('howwasihacked_path_attempt_id');
+    const diagnosisType = sessionStorage.getItem('howwasihacked_diagnosis_type');
+    const context = sessionStorage.getItem('howwasihacked_diagnosis_context');
+    const answersRaw = sessionStorage.getItem('howwasihacked_answers');
 
-    if (!storedPathAttemptId || !storedDiagnosisType) return null;
+    const raw = `${pathAttemptId ?? ''}::${diagnosisType ?? ''}::${context ?? ''}::${answersRaw ?? ''}`;
+    if (cacheRef.current?.raw === raw) return cacheRef.current.value;
 
-    let parsedContext = null;
-    if (storedContext) {
-      try {
-        parsedContext = JSON.parse(storedContext);
-      } catch {
-        // Ignore parse errors
-      }
+    if (!pathAttemptId || !diagnosisType) {
+      cacheRef.current = { raw, value: null };
+      return null;
     }
 
-    return {
-      pathAttemptId: storedPathAttemptId,
-      diagnosisType: storedDiagnosisType as DiagnosisType,
+    let parsedContext: StoredDiagnosisState['context'] = null;
+    if (context) {
+      try { parsedContext = JSON.parse(context); } catch { /* ignore */ }
+    }
+
+    let parsedAnswers: AnswerMap = {};
+    if (answersRaw) {
+      try { parsedAnswers = JSON.parse(answersRaw); } catch { /* ignore */ }
+    }
+
+    const value: StoredDiagnosisState = {
+      pathAttemptId,
+      diagnosisType: diagnosisType as DiagnosisType,
       context: parsedContext,
+      answers: parsedAnswers,
     };
-  };
 
-  const getServerSnapshot = (): DiagnosisState | null => null;
+    cacheRef.current = { raw, value };
+    return value;
+  }, []);
 
+  const getServerSnapshot = (): StoredDiagnosisState | null => null;
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 export default function DiagnosisPage() {
   const router = useRouter();
-  const { sessionId, isLoading, error } = useSession();
+  const { isLoading, error } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [diagnosisId, setDiagnosisId] = useState<string | null>(null);
+  // Track rejected diagnoses for client-side re-scoring
+  const [rejectedDiagnoses, setRejectedDiagnoses] = useState<DiagnosisType[]>([]);
+  // Current displayed diagnosis (may change after rejection)
+  const [currentDiagnosis, setCurrentDiagnosis] = useState<DiagnosisType | null>(null);
+  const [currentContext, setCurrentContext] = useState<{ howFound?: string; whatDoing?: string } | null>(null);
 
-  const diagnosisState = useSessionStorageState();
-
-  // Track whether we've created the diagnosis to prevent duplicates
   const diagnosisCreatedRef = useRef(false);
+  const storedState = useStoredDiagnosisState();
 
-  // Create the diagnosis record when we have the state
+  // Initialize from stored state
   useEffect(() => {
-    if (!diagnosisState || diagnosisCreatedRef.current) return;
+    if (!storedState || diagnosisCreatedRef.current) return;
+    setCurrentDiagnosis(storedState.diagnosisType);
+    setCurrentContext(storedState.context);
+  }, [storedState]);
 
+  // Create the initial diagnosis record
+  useEffect(() => {
+    if (!currentDiagnosis || !storedState || diagnosisCreatedRef.current) return;
     diagnosisCreatedRef.current = true;
 
-    const createDiagnosisRecord = async () => {
-      try {
-        const response = await fetch('/api/diagnosis', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            pathAttemptId: diagnosisState.pathAttemptId,
-            diagnosisType: diagnosisState.diagnosisType,
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setDiagnosisId(data.diagnosis.id);
-        }
-      } catch (err) {
-        console.error('Error creating diagnosis record:', err);
-      }
-    };
-
-    createDiagnosisRecord();
-  }, [diagnosisState]);
+    fetch('/api/diagnosis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pathAttemptId: storedState.pathAttemptId,
+        diagnosisType: currentDiagnosis,
+      }),
+    })
+      .then((r) => r.json())
+      .then((data: { diagnosis: { id: string } }) => setDiagnosisId(data.diagnosis.id))
+      .catch((err) => console.error('Error creating diagnosis record:', err));
+  }, [currentDiagnosis, storedState]);
 
   const handleAccept = async () => {
     if (!diagnosisId) return;
-
     setIsSubmitting(true);
     try {
       await fetch('/api/diagnosis', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          diagnosisId,
-          accepted: true,
-        }),
+        body: JSON.stringify({ diagnosisId, accepted: true }),
       });
-
-      // Clear the stored diagnosis data
-      sessionStorage.removeItem('howwasihacked_diagnosis_type');
-      sessionStorage.removeItem('howwasihacked_diagnosis_context');
-
-      // Redirect to thank you or learn page
+      // Clear session state
+      ['howwasihacked_path_attempt_id', 'howwasihacked_diagnosis_type',
+       'howwasihacked_diagnosis_context', 'howwasihacked_answers'].forEach((k) =>
+        sessionStorage.removeItem(k)
+      );
       router.push('/learn');
     } catch (err) {
       console.error('Error accepting diagnosis:', err);
@@ -118,112 +131,88 @@ export default function DiagnosisPage() {
   };
 
   const handleReject = async () => {
-    if (!diagnosisId || !sessionId || !diagnosisState) return;
-
+    if (!diagnosisId || !storedState || !currentDiagnosis) return;
     setIsSubmitting(true);
-    try {
-      // Get the current path attempt ID before clearing
-      const currentPathAttemptId = diagnosisState.pathAttemptId;
-      const rejectedDiagnosisType = diagnosisState.diagnosisType;
 
-      // Mark this diagnosis as rejected
+    try {
+      // Mark current diagnosis rejected
       await fetch('/api/diagnosis', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          diagnosisId,
-          accepted: false,
-        }),
+        body: JSON.stringify({ diagnosisId, accepted: false }),
       });
 
-      // Get probability guidance including fork point and suggested path
-      const probResponse = await fetch(
-        `/api/probability?sessionId=${sessionId}&pathAttemptId=${currentPathAttemptId}&rejectedDiagnosis=${rejectedDiagnosisType}`
-      );
+      const newRejected = [...rejectedDiagnoses, currentDiagnosis];
+      setRejectedDiagnoses(newRejected);
 
-      if (!probResponse.ok) {
-        throw new Error('Failed to get probability guidance');
+      // Re-score client-side with all rejected diagnoses penalized
+      const walletType = storedState.answers.wallet_type as WalletType | undefined;
+      let probState = createInitialProbabilities(walletType ?? null);
+
+      for (const [questionId, answer] of Object.entries(storedState.answers)) {
+        const answerStr = Array.isArray(answer) ? JSON.stringify(answer) : answer;
+        probState = applyAnswerAdjustment(probState, questionId, answerStr);
+      }
+      for (const rejected of newRejected) {
+        probState = rejectDiagnosis(probState, rejected);
       }
 
-      const probData = await probResponse.json();
-      const { suggestedPath, forkPoint, rejectedDiagnoses } = probData;
+      const nextDiagnosis = getMostLikelyDiagnosis(probState);
+      setCurrentDiagnosis(nextDiagnosis);
 
-      // Clear the stored diagnosis data
-      sessionStorage.removeItem('howwasihacked_diagnosis_type');
-      sessionStorage.removeItem('howwasihacked_diagnosis_context');
-      sessionStorage.removeItem('howwasihacked_path_attempt_id');
+      const nextContext =
+        storedState.answers.timing === 'active'
+          ? {
+              howFound: typeof storedState.answers.how_found_site === 'string' ? storedState.answers.how_found_site : undefined,
+              whatDoing: typeof storedState.answers.what_trying_to_do === 'string' ? storedState.answers.what_trying_to_do : undefined,
+            }
+          : null;
+      setCurrentContext(nextContext);
 
-      // Store rejected diagnoses for the retry flow
-      sessionStorage.setItem('howwasihacked_rejected_diagnoses', JSON.stringify(rejectedDiagnoses));
-
-      // Create a new path attempt
-      const response = await fetch('/api/path', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        sessionStorage.setItem('howwasihacked_path_attempt_id', data.pathAttempt.id);
-
-        // Store the fork point and retry info for the path pages
-        sessionStorage.setItem('howwasihacked_fork_point', forkPoint || 'timing');
-        sessionStorage.setItem('howwasihacked_is_retry', 'true');
-        sessionStorage.setItem('howwasihacked_attempt_number', String(data.pathAttempt.attempt_number));
-
-        // Route to the appropriate path based on fork point
-        if (forkPoint === 'timing') {
-          // Need to restart from beginning - use timing question
-          router.push('/diagnostic/timing');
-        } else if (suggestedPath === 'path-b') {
-          // Route to Path B (malicious transaction)
-          router.push('/diagnostic/path-b');
-        } else {
-          // Route to Path A with the fork point
-          router.push('/diagnostic/path-a');
-        }
-      }
+      // Create a new diagnosis record for the next suggestion
+      diagnosisCreatedRef.current = false;
+      setDiagnosisId(null);
     } catch (err) {
       console.error('Error rejecting diagnosis:', err);
+    } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Re-create diagnosis record when currentDiagnosis changes after rejection
+  useEffect(() => {
+    if (!currentDiagnosis || !storedState || diagnosisCreatedRef.current) return;
+    diagnosisCreatedRef.current = true;
+
+    fetch('/api/diagnosis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pathAttemptId: storedState.pathAttemptId,
+        diagnosisType: currentDiagnosis,
+      }),
+    })
+      .then((r) => r.json())
+      .then((data: { diagnosis: { id: string } }) => setDiagnosisId(data.diagnosis.id))
+      .catch((err) => console.error('Error creating diagnosis record:', err));
+  }, [currentDiagnosis, storedState]);
+
   const handleLearnClick = async () => {
     if (!diagnosisId) return;
-
-    try {
-      await fetch('/api/diagnosis', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          diagnosisId,
-          clickedLearn: true,
-        }),
-      });
-    } catch (err) {
-      console.error('Error tracking learn click:', err);
-    }
+    await fetch('/api/diagnosis', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ diagnosisId, clickedLearn: true }),
+    }).catch(() => {});
   };
 
   const handleHwrClick = async () => {
     if (!diagnosisId) return;
-
-    try {
-      await fetch('/api/diagnosis', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          diagnosisId,
-          clickedHwr: true,
-        }),
-      });
-    } catch (err) {
-      console.error('Error tracking HWR click:', err);
-    }
+    await fetch('/api/diagnosis', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ diagnosisId, clickedHwr: true }),
+    }).catch(() => {});
   };
 
   if (isLoading) {
@@ -242,7 +231,7 @@ export default function DiagnosisPage() {
     );
   }
 
-  if (!diagnosisState) {
+  if (!currentDiagnosis) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
         <p className="text-[var(--text-muted)]">Loading your diagnosis...</p>
@@ -253,8 +242,8 @@ export default function DiagnosisPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <DiagnosisScreen
-        diagnosisType={diagnosisState.diagnosisType}
-        context={diagnosisState.context || undefined}
+        diagnosisType={currentDiagnosis}
+        context={currentContext ?? undefined}
         onReject={handleReject}
         onAccept={handleAccept}
         onLearnClick={handleLearnClick}
