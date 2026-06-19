@@ -13,7 +13,7 @@ export default function Home() {
             Getting hacked is one of the worst feelings in crypto. We know how much it hurts.
           </p>
           <p>
-            This tool will help you understand what likely happened so you can protect yourself going forward. We&apos;ll ask you a few questions &ndash; take your time.
+            This tool will help you understand what likely happened so you can protect yourself going forward. We&apos;ll ask around 15&ndash;20 questions &mdash; some may not apply to you.
           </p>
         </div>
 
