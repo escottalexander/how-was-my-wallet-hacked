@@ -348,6 +348,9 @@ export function QuestionPipeline({ onAnswer, onComplete, initialAnswers }: Quest
   const handleTextContinue = () => {
     if (!currentId) return;
     const value = pendingText.trim();
+    if (value) {
+      onAnswer?.(currentId, value);
+    }
     const newAnswers = value ? { ...answers, [currentId]: value } : answers;
     setAnswers(newAnswers);
     onComplete(newAnswers);
