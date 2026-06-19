@@ -175,7 +175,7 @@ export const ANSWER_MULTIPLIERS: Record<string, Record<string, Partial<Record<Di
     website: {
       phishing_fake_site: 10.0,
     },
-    code: {
+    code_file: {
       exposed_in_code: 10.0,
     },
     between_wallets: {
@@ -268,7 +268,7 @@ export const ANSWER_MULTIPLIERS: Record<string, Record<string, Partial<Record<Di
       compromised_hardware: 5.0,
     },
   },
-  how_found: {
+  how_found_site: {
     social_media: {
       social_engineering_file: 3.0,
       malicious_transaction: 2.0,
@@ -289,7 +289,7 @@ export const ANSWER_MULTIPLIERS: Record<string, Record<string, Partial<Record<Di
       phishing_fake_site: 2.0, // Typosquatting risk
     },
   },
-  what_doing: {
+  what_trying_to_do: {
     airdrop: {
       malicious_transaction: 2.0,
       phishing_fake_site: 1.5,
@@ -306,6 +306,48 @@ export const ANSWER_MULTIPLIERS: Record<string, Record<string, Partial<Record<Di
     },
     other: {
       // No specific adjustment
+    },
+  },
+  cloud_accounts_compromised: {
+    yes: {
+      cloud_storage: 5.0,
+      digital_storage: 2.0,
+    },
+    no: {
+      cloud_storage: 0.8,
+    },
+  },
+  suspected_malware: {
+    yes: {
+      social_engineering_file: 2.0,
+      malicious_download: 2.0,
+      malicious_extension: 2.0,
+      clipboard_compromise: 1.5,
+    },
+  },
+  uncompromised_keys: {
+    yes_same_seed: {
+      // Some keys spared under same seed → suggests transaction-level or selective attack
+      malicious_transaction: 2.0,
+      phishing_fake_site: 2.0,
+    },
+    no_all_compromised: {
+      // Full sweep → more consistent with seed phrase exposure
+      cloud_storage: 1.3,
+      phone_storage: 1.3,
+      digital_storage: 1.3,
+    },
+  },
+  seeds_compromised: {
+    two_to_five: {
+      // Multiple seeds → more likely systematic / shared storage vector
+      cloud_storage: 1.5,
+      digital_storage: 1.5,
+      social_engineering_file: 1.3,
+    },
+    more_than_five: {
+      cloud_storage: 2.0,
+      digital_storage: 2.0,
     },
   },
 };
@@ -345,25 +387,34 @@ export function applyAnswerAdjustment(
   answer: string
 ): ProbabilityState {
   const newWeights = { ...state.weights };
-
-  // Check if we have multipliers for this question and answer
   const questionMultipliers = ANSWER_MULTIPLIERS[questionId];
-  if (questionMultipliers) {
-    const answerMultipliers = questionMultipliers[answer];
-    if (answerMultipliers) {
-      for (const [diagnosis, multiplier] of Object.entries(answerMultipliers)) {
-        const diagnosisKey = diagnosis as DiagnosisType;
-        if (newWeights[diagnosisKey] !== undefined) {
-          newWeights[diagnosisKey] *= multiplier;
-        }
+  if (!questionMultipliers) return state;
+
+  // Handle JSON array strings from multi-select questions
+  let answers: string[];
+  if (answer.startsWith('[')) {
+    try {
+      const parsed: unknown = JSON.parse(answer);
+      answers = Array.isArray(parsed) ? parsed.map(String) : [answer];
+    } catch {
+      answers = [answer];
+    }
+  } else {
+    answers = [answer];
+  }
+
+  for (const a of answers) {
+    const multipliers = questionMultipliers[a];
+    if (!multipliers) continue;
+    for (const [diagnosis, multiplier] of Object.entries(multipliers)) {
+      const key = diagnosis as DiagnosisType;
+      if (newWeights[key] !== undefined) {
+        newWeights[key] *= multiplier;
       }
     }
   }
 
-  return {
-    ...state,
-    weights: newWeights,
-  };
+  return { ...state, weights: newWeights };
 }
 
 // Apply multiple path steps to probabilities
