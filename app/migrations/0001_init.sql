@@ -45,3 +45,4 @@ CREATE TABLE diagnoses (
   FOREIGN KEY (path_attempt_id) REFERENCES path_attempts(id)
 );
 CREATE INDEX idx_diagnoses_type ON diagnoses(diagnosis_type);
+
