@@ -12,7 +12,6 @@
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
-    "better-sqlite3": "^12.6.2",
     "next": "^16.2.9",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -22,7 +21,6 @@
     "@cloudflare/workers-types": "^4.20260624.1",
     "@opennextjs/cloudflare": "^1.19.11",
     "@tailwindcss/postcss": "^4",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
