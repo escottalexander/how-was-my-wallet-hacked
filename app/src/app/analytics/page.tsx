@@ -132,7 +132,7 @@ export default function AnalyticsPage() {
       const all: AllAnalytics = await allRes.json();
       setData(all);
       if (clusterRes.ok) {
-        const c = await clusterRes.json();
+        const c = await clusterRes.json() as { clusters?: typeof clusters };
         setClusters(c.clusters ?? []);
       }
     } catch (err) {

@@ -61,8 +61,8 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { sessionId, walletType, walletSpecific, valueRange } = body;
+    const body = await request.json() as Record<string, unknown>;
+    const { sessionId, walletType, walletSpecific, valueRange } = body as { sessionId: string; walletType: string; walletSpecific: string; valueRange: string };
 
     if (!sessionId) {
       return NextResponse.json(

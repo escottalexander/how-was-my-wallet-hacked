@@ -30,9 +30,10 @@ export default function DiagnosticPage() {
       body: JSON.stringify({ sessionId }),
     })
       .then((r) => r.json())
-      .then((data: { pathAttempt: { id: string } }) => {
-        setPathAttemptId(data.pathAttempt.id);
-        sessionStorage.setItem('howwasihacked_path_attempt_id', data.pathAttempt.id);
+      .then((data) => {
+        const { pathAttempt } = data as { pathAttempt: { id: string } };
+        setPathAttemptId(pathAttempt.id);
+        sessionStorage.setItem('howwasihacked_path_attempt_id', pathAttempt.id);
       })
       .catch((err) => console.error('Error creating path attempt:', err));
   }, [sessionId]);

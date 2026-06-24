@@ -12,8 +12,8 @@ import {
 // POST: Create a new path attempt and optionally the first step
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { sessionId, questionId, answerSelected } = body;
+    const body = await request.json() as Record<string, unknown>;
+    const { sessionId, questionId, answerSelected } = body as { sessionId: string; questionId: string; answerSelected: string };
 
     if (!sessionId) {
       return NextResponse.json(
@@ -99,8 +99,8 @@ export async function GET(request: NextRequest) {
 // PATCH: Add a new step to an existing path attempt, or mark it complete
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { pathAttemptId, questionId, answerSelected, complete } = body;
+    const body = await request.json() as Record<string, unknown>;
+    const { pathAttemptId, questionId, answerSelected, complete } = body as { pathAttemptId: string; questionId: string; answerSelected: string; complete: boolean };
 
     if (!pathAttemptId) {
       return NextResponse.json(

@@ -51,7 +51,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
           throw new Error('Failed to create session');
         }
 
-        const data = await response.json();
+        const data = await response.json() as { sessionId: string };
         setSessionId(data.sessionId);
         localStorage.setItem('howwasihacked_session_id', data.sessionId);
       } catch (err) {

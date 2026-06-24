@@ -15,8 +15,8 @@ import {
 // POST: Calculate probabilities based on session, path steps, and rejections
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { sessionId, pathAttemptId, rejectedDiagnoses } = body;
+    const body = await request.json() as Record<string, unknown>;
+    const { sessionId, pathAttemptId, rejectedDiagnoses } = body as { sessionId: string; pathAttemptId: string; rejectedDiagnoses: string[] };
 
     if (!sessionId) {
       return NextResponse.json(

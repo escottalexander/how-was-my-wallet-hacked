@@ -12,8 +12,8 @@ import {
 // POST: Create a new diagnosis for a path attempt
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { pathAttemptId, diagnosisType } = body;
+    const body = await request.json() as Record<string, unknown>;
+    const { pathAttemptId, diagnosisType } = body as { pathAttemptId: string; diagnosisType: string };
 
     if (!pathAttemptId || !diagnosisType) {
       return NextResponse.json(
@@ -83,8 +83,8 @@ export async function GET(request: NextRequest) {
 // PATCH: Update diagnosis (accepted status, clicked_learn, clicked_hwr)
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { diagnosisId, accepted, clickedLearn, clickedHwr } = body;
+    const body = await request.json() as Record<string, unknown>;
+    const { diagnosisId, accepted, clickedLearn, clickedHwr } = body as { diagnosisId: string; accepted: boolean; clickedLearn: boolean; clickedHwr: boolean };
 
     if (!diagnosisId) {
       return NextResponse.json(
