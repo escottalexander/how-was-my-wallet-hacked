@@ -6,7 +6,7 @@
 
 **Architecture:** D1 is SQLite-compatible but its driver is **async** and accessed through a **Worker binding** (`env.DB`) rather than a file handle. We swap `better-sqlite3` for the D1 client behind the existing `getDb()` seam, convert every `src/lib/session.ts` query function to `async`, and `await` them in the 5 API routes. The schema moves from runtime `CREATE TABLE IF NOT EXISTS` to a versioned D1 migration. The Next app is built for Workers via the `@opennextjs/cloudflare` adapter. **No existing data needs to be preserved — the database is created fresh.**
 
-**Tech Stack:** Next.js 16.1.5 (App Router), `@opennextjs/cloudflare`, Cloudflare D1, `wrangler`, TypeScript.
+**Tech Stack:** Next.js 16.2.9 (App Router; upgraded from 16.1.5 in Task 1 to enter the adapter's supported range), `@opennextjs/cloudflare`, Cloudflare D1, `wrangler`, TypeScript.
 
 ## Global Constraints
 
@@ -21,7 +21,7 @@
 
 ## Risks / Open Questions (resolve during Task 1)
 
-- **Next 16 support in `@opennextjs/cloudflare`.** This app is on Next `16.1.5`, which is new. Task 1 Step 2 pins the latest `@opennextjs/cloudflare` and immediately smoke-tests the adapter. **If the adapter does not yet support Next 16**, STOP and surface to the user — options are (a) wait/upgrade the adapter, or (b) pin Next to the latest 15.x the adapter supports. Do not proceed past Task 1 until the adapter builds.
+- **Next 16 support in `@opennextjs/cloudflare`** — RESOLVED. `@opennextjs/cloudflare@1.19.x` requires `next ">=15.5.18 <16 || >=16.2.6"`. The app was on `16.1.5` (unsupported gap). Decision (2026-06-24): upgrade Next to `16.2.9` (latest stable, supported). Task 1 Step 0 performs this upgrade before installing the adapter.
 - `wrangler d1 create` and `deploy` require `wrangler login` (interactive). Local dev and local migrations do **not** — they use a placeholder `database_id`. The plan keeps all verification local; the real `database_id` and deploy are a final, separately-noted step.
 
 ## File Structure
@@ -53,13 +53,27 @@
 **Interfaces:**
 - Produces: `getCloudflareContext()` (from `@opennextjs/cloudflare`) usable in request handlers; global type `CloudflareEnv` with field `DB: D1Database`; npm scripts `cf-typegen`, `preview`, `deploy`.
 
+- [ ] **Step 0: Upgrade Next.js into the adapter's supported range**
+
+`@opennextjs/cloudflare` requires `next ">=15.5.18 <16 || >=16.2.6"`; the app is on `16.1.5`. Upgrade to the latest stable 16.2.x.
+
+Run (from `app/`):
+```bash
+npm install next@16.2.9 eslint-config-next@16.2.9
+```
+Then confirm the app still builds on Node (still using `better-sqlite3` at this point):
+```bash
+npx tsc --noEmit && npm run build
+```
+Expected: both succeed. If `npm run build` surfaces a Next 16.2 breaking change in app code, fix it minimally and note it in the report (do not refactor beyond what the upgrade requires). If the breakage is large/ambiguous, STOP and report BLOCKED.
+
 - [ ] **Step 1: Install adapter + wrangler as devDependencies**
 
 Run (from `app/`):
 ```bash
 npm install --save-dev @opennextjs/cloudflare@latest wrangler@latest @cloudflare/workers-types
 ```
-Expected: installs without peer-dependency errors.
+Expected: installs without peer-dependency errors (now that Next is 16.2.9).
 
 - [ ] **Step 2: Create `app/wrangler.jsonc`**
 
@@ -274,16 +288,29 @@ This is one atomic change: `getDb()`'s return type changes, which forces every `
 - Consumes: D1 binding `DB` (Task 1), local schema (Task 2).
 - Produces: `getDb(): D1Database`. All `session.ts` exports become async, e.g. `getSession(id: string): Promise<Session | null>`, `createSession(userHash: string): Promise<Session>`, `createPathAttempt(sessionId: string): Promise<PathAttempt>`, `getPathSteps(pathAttemptId: string): Promise<PathStep[]>`, `getDiagnosisByWalletType(): Promise<DiagnosisByWalletType[]>`, etc. `createUserHash(ip, userAgent): string` stays **synchronous**.
 
+- [ ] **Step 0: Scope the Cloudflare types correctly (cleanup from Task 1)**
+
+Task 1 added `"types": ["@cloudflare/workers-types"]` to `app/tsconfig.json`, which globally overrode the DOM `fetch`/`Request`/`Response` types and forced harmless `unknown` casts into 8 source files. Workers types should be scoped to where they're used, not global. Fix:
+
+1. In `app/tsconfig.json`, remove the `"types": ["@cloudflare/workers-types"]` entry from `compilerOptions` (restore it to its pre-Task-1 state — no `types` array).
+2. Revert the cast-only edits Task 1 made to these files (restore their original bodies; the 5 API routes are rewritten below to add `await`, so just ensure they no longer carry the `as Record<string, unknown>` double-casts):
+   `src/app/diagnostic/page.tsx`, `src/app/diagnostic/diagnosis/page.tsx`, `src/components/SessionProvider.tsx`, `src/app/analytics/page.tsx`.
+   The quickest safe way for the non-route files: `git checkout f308cd9 -- src/app/diagnostic/page.tsx src/app/diagnostic/diagnosis/page.tsx src/components/SessionProvider.tsx src/app/analytics/page.tsx`
+3. After Step 1 (db.ts) below adds the scoped `import type { D1Database }`, run `npx tsc --noEmit`. Expected: 0 errors (removing the global Workers types reverts `Response.json()` to `Promise<any>`, so the original un-cast code compiles).
+
+If removing the global `types` makes the generated `cloudflare-env.d.ts` fail to resolve `D1Database`, do NOT re-add the global array — instead confirm `cloudflare-env.d.ts` carries its own `/// <reference types="@cloudflare/workers-types" />` (regenerate with `npm run cf-typegen` if needed).
+
 - [ ] **Step 1: Rewrite `app/src/lib/db.ts`**
 
 ```typescript
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import type { D1Database } from '@cloudflare/workers-types';
 
 // Returns the D1 binding for the current request. Available in route handlers
 // and server components during a request; works under `next dev` because
 // next.config.ts calls initOpenNextCloudflareForDev().
 export function getDb(): D1Database {
-  return getCloudflareContext().env.DB;
+  return getCloudflareContext().env.DB as D1Database;
 }
 ```
 
