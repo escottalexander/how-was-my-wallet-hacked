@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, getPathAttempt, getPathSteps, getRejectedDiagnosesForSession } from '@/lib/session';
+import type { PathStep } from '@/lib/types';
 import {
   createInitialProbabilities,
   applyPathSteps,
@@ -15,7 +16,7 @@ import {
 // POST: Calculate probabilities based on session, path steps, and rejections
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as Record<string, unknown>;
+    const body = await request.json();
     const { sessionId, pathAttemptId, rejectedDiagnoses } = body as { sessionId: string; pathAttemptId: string; rejectedDiagnoses: string[] };
 
     if (!sessionId) {
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get session for wallet type
-    const session = getSession(sessionId);
+    const session = await getSession(sessionId);
     if (!session) {
       return NextResponse.json(
         { error: 'Session not found' },
@@ -38,11 +39,11 @@ export async function POST(request: NextRequest) {
     let state = createInitialProbabilities(session.wallet_type);
 
     // Apply path steps if pathAttemptId provided
-    let steps: ReturnType<typeof getPathSteps> = [];
+    let steps: PathStep[] = [];
     if (pathAttemptId) {
-      const pathAttempt = getPathAttempt(pathAttemptId);
+      const pathAttempt = await getPathAttempt(pathAttemptId);
       if (pathAttempt) {
-        steps = getPathSteps(pathAttemptId);
+        steps = await getPathSteps(pathAttemptId);
         state = applyPathSteps(state, steps);
       }
     }
@@ -93,7 +94,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get session for wallet type
-    const session = getSession(sessionId);
+    const session = await getSession(sessionId);
     if (!session) {
       return NextResponse.json(
         { error: 'Session not found' },
@@ -102,14 +103,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all rejected diagnoses for this session
-    const allRejectedDiagnoses = getRejectedDiagnosesForSession(sessionId);
+    const allRejectedDiagnoses = await getRejectedDiagnosesForSession(sessionId);
 
     // Get path steps to determine fork point
-    let steps: ReturnType<typeof getPathSteps> = [];
+    let steps: PathStep[] = [];
     if (pathAttemptId) {
-      const pathAttempt = getPathAttempt(pathAttemptId);
+      const pathAttempt = await getPathAttempt(pathAttemptId);
       if (pathAttempt) {
-        steps = getPathSteps(pathAttemptId);
+        steps = await getPathSteps(pathAttemptId);
       }
     }
 

@@ -26,37 +26,37 @@ export async function GET(request: NextRequest) {
     switch (type) {
       case 'by_wallet_type':
         return NextResponse.json({
-          diagnosisByWalletType: getDiagnosisByWalletType(),
+          diagnosisByWalletType: await getDiagnosisByWalletType(),
         });
 
       case 'by_value_range':
         return NextResponse.json({
-          diagnosisByValueRange: getDiagnosisByValueRange(),
+          diagnosisByValueRange: await getDiagnosisByValueRange(),
         });
 
       case 'path_attempts':
         return NextResponse.json({
-          pathAttemptStats: getPathAttemptStats(),
+          pathAttemptStats: await getPathAttemptStats(),
         });
 
       case 'drop_off':
         return NextResponse.json({
-          dropOffPoints: getDropOffPoints(),
+          dropOffPoints: await getDropOffPoints(),
         });
 
       case 'engagement':
         return NextResponse.json({
-          engagementStats: getEngagementStats(),
+          engagementStats: await getEngagementStats(),
         });
 
       case 'trends':
         return NextResponse.json({
-          diagnosisTrends: getDiagnosisTrends(days),
+          diagnosisTrends: await getDiagnosisTrends(days),
         });
 
       case 'repeat_visitors':
         return NextResponse.json({
-          repeatVisitorStats: getRepeatVisitorStats(),
+          repeatVisitorStats: await getRepeatVisitorStats(),
         });
 
       case 'session_paths':
@@ -67,24 +67,24 @@ export async function GET(request: NextRequest) {
           );
         }
         return NextResponse.json({
-          sessionPaths: getSessionPaths(sessionId),
+          sessionPaths: await getSessionPaths(sessionId),
         });
 
       case 'clusters':
         return NextResponse.json({
-          clusters: getClusterStats(),
+          clusters: await getClusterStats(),
         });
 
       case 'all':
       default:
         return NextResponse.json({
-          diagnosisByWalletType: getDiagnosisByWalletType(),
-          diagnosisByValueRange: getDiagnosisByValueRange(),
-          pathAttemptStats: getPathAttemptStats(),
-          dropOffPoints: getDropOffPoints(),
-          engagementStats: getEngagementStats(),
-          diagnosisTrends: getDiagnosisTrends(days),
-          repeatVisitorStats: getRepeatVisitorStats(),
+          diagnosisByWalletType: await getDiagnosisByWalletType(),
+          diagnosisByValueRange: await getDiagnosisByValueRange(),
+          pathAttemptStats: await getPathAttemptStats(),
+          dropOffPoints: await getDropOffPoints(),
+          engagementStats: await getEngagementStats(),
+          diagnosisTrends: await getDiagnosisTrends(days),
+          repeatVisitorStats: await getRepeatVisitorStats(),
         });
     }
   } catch (error) {

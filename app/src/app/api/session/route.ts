@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const userHash = createUserHash(ip, userAgent);
 
     // Create new session
-    const session = createSession(userHash);
+    const session = await createSession(userHash);
 
     return NextResponse.json({ sessionId: session.id }, { status: 201 });
   } catch (error) {
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const session = getSession(sessionId);
+    const session = await getSession(sessionId);
 
     if (!session) {
       return NextResponse.json(
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json() as Record<string, unknown>;
+    const body = await request.json();
     const { sessionId, walletType, walletSpecific, valueRange } = body as { sessionId: string; walletType: string; walletSpecific: string; valueRange: string };
 
     if (!sessionId) {
@@ -72,7 +72,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Verify session exists
-    const session = getSession(sessionId);
+    const session = await getSession(sessionId);
     if (!session) {
       return NextResponse.json(
         { error: 'Session not found' },
@@ -82,22 +82,22 @@ export async function PATCH(request: NextRequest) {
 
     // Update wallet information if provided
     if (walletType) {
-      updateSessionWallet(sessionId, walletType as WalletType, walletSpecific ?? null);
+      await updateSessionWallet(sessionId, walletType as WalletType, walletSpecific ?? null);
     } else if (walletSpecific !== undefined) {
       // wallet_generated question: update specific wallet app without changing wallet type
-      const current = getSession(sessionId);
+      const current = await getSession(sessionId);
       if (current?.wallet_type) {
-        updateSessionWallet(sessionId, current.wallet_type, walletSpecific);
+        await updateSessionWallet(sessionId, current.wallet_type, walletSpecific);
       }
     }
 
     // Update value range if provided
     if (valueRange) {
-      updateSessionValueRange(sessionId, valueRange as ValueRange);
+      await updateSessionValueRange(sessionId, valueRange as ValueRange);
     }
 
     // Return updated session
-    const updatedSession = getSession(sessionId);
+    const updatedSession = await getSession(sessionId);
     return NextResponse.json(updatedSession);
   } catch (error) {
     console.error('Error updating session:', error);

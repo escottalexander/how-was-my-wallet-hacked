@@ -12,7 +12,7 @@ import {
 // POST: Create a new path attempt and optionally the first step
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as Record<string, unknown>;
+    const body = await request.json();
     const { sessionId, questionId, answerSelected } = body as { sessionId: string; questionId: string; answerSelected: string };
 
     if (!sessionId) {
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify session exists
-    const session = getSession(sessionId);
+    const session = await getSession(sessionId);
     if (!session) {
       return NextResponse.json(
         { error: 'Session not found' },
@@ -32,12 +32,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new path attempt
-    const pathAttempt = createPathAttempt(sessionId);
+    const pathAttempt = await createPathAttempt(sessionId);
 
     // If question and answer provided, create the first step
     let pathStep = null;
     if (questionId && answerSelected) {
-      pathStep = createPathStep(pathAttempt.id, questionId, answerSelected);
+      pathStep = await createPathStep(pathAttempt.id, questionId, answerSelected);
     }
 
     return NextResponse.json(
@@ -62,24 +62,24 @@ export async function GET(request: NextRequest) {
 
     if (pathAttemptId) {
       // Get specific path attempt and its steps
-      const pathAttempt = getPathAttempt(pathAttemptId);
+      const pathAttempt = await getPathAttempt(pathAttemptId);
       if (!pathAttempt) {
         return NextResponse.json(
           { error: 'Path attempt not found' },
           { status: 404 }
         );
       }
-      const steps = getPathSteps(pathAttemptId);
+      const steps = await getPathSteps(pathAttemptId);
       return NextResponse.json({ pathAttempt, steps });
     }
 
     if (sessionId) {
       // Get latest path attempt for session
-      const pathAttempt = getLatestPathAttempt(sessionId);
+      const pathAttempt = await getLatestPathAttempt(sessionId);
       if (!pathAttempt) {
         return NextResponse.json({ pathAttempt: null, steps: [] });
       }
-      const steps = getPathSteps(pathAttempt.id);
+      const steps = await getPathSteps(pathAttempt.id);
       return NextResponse.json({ pathAttempt, steps });
     }
 
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
 // PATCH: Add a new step to an existing path attempt, or mark it complete
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json() as Record<string, unknown>;
+    const body = await request.json();
     const { pathAttemptId, questionId, answerSelected, complete } = body as { pathAttemptId: string; questionId: string; answerSelected: string; complete: boolean };
 
     if (!pathAttemptId) {
@@ -109,7 +109,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const pathAttempt = getPathAttempt(pathAttemptId);
+    const pathAttempt = await getPathAttempt(pathAttemptId);
     if (!pathAttempt) {
       return NextResponse.json(
         { error: 'Path attempt not found' },
@@ -119,7 +119,7 @@ export async function PATCH(request: NextRequest) {
 
     // Mark the attempt as completed
     if (complete === true) {
-      completePathAttempt(pathAttemptId);
+      await completePathAttempt(pathAttemptId);
       return NextResponse.json({ completed: true });
     }
 
@@ -130,7 +130,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const pathStep = createPathStep(pathAttemptId, questionId, answerSelected);
+    const pathStep = await createPathStep(pathAttemptId, questionId, answerSelected);
     return NextResponse.json({ pathStep });
   } catch (error) {
     console.error('Error in path PATCH:', error);

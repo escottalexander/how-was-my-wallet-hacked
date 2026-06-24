@@ -104,8 +104,8 @@ export default function DiagnosisPage() {
         diagnosisType: currentDiagnosis,
       }),
     })
-      .then((r) => r.json())
-      .then((data) => setDiagnosisId((data as { diagnosis: { id: string } }).diagnosis.id))
+      .then((r) => r.json() as Promise<{ diagnosis: { id: string } }>)
+      .then((data) => setDiagnosisId(data.diagnosis.id))
       .catch((err) => console.error('Error creating diagnosis record:', err));
   }, [currentDiagnosis, storedState]);
 
@@ -192,8 +192,8 @@ export default function DiagnosisPage() {
         diagnosisType: currentDiagnosis,
       }),
     })
-      .then((r) => r.json())
-      .then((data) => setDiagnosisId((data as { diagnosis: { id: string } }).diagnosis.id))
+      .then((r) => r.json() as Promise<{ diagnosis: { id: string } }>)
+      .then((data) => setDiagnosisId(data.diagnosis.id))
       .catch((err) => console.error('Error creating diagnosis record:', err));
   }, [currentDiagnosis, storedState]);
 

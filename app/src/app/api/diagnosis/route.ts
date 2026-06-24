@@ -12,7 +12,7 @@ import {
 // POST: Create a new diagnosis for a path attempt
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as Record<string, unknown>;
+    const body = await request.json();
     const { pathAttemptId, diagnosisType } = body as { pathAttemptId: string; diagnosisType: string };
 
     if (!pathAttemptId || !diagnosisType) {
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify path attempt exists
-    const pathAttempt = getPathAttempt(pathAttemptId);
+    const pathAttempt = await getPathAttempt(pathAttemptId);
     if (!pathAttempt) {
       return NextResponse.json(
         { error: 'Path attempt not found' },
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create diagnosis
-    const diagnosis = createDiagnosis(pathAttemptId, diagnosisType);
+    const diagnosis = await createDiagnosis(pathAttemptId, diagnosisType);
 
     return NextResponse.json({ diagnosis }, { status: 201 });
   } catch (error) {
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     const pathAttemptId = searchParams.get('pathAttemptId');
 
     if (diagnosisId) {
-      const diagnosis = getDiagnosis(diagnosisId);
+      const diagnosis = await getDiagnosis(diagnosisId);
       if (!diagnosis) {
         return NextResponse.json(
           { error: 'Diagnosis not found' },
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (pathAttemptId) {
-      const diagnosis = getDiagnosisByPathAttempt(pathAttemptId);
+      const diagnosis = await getDiagnosisByPathAttempt(pathAttemptId);
       return NextResponse.json({ diagnosis });
     }
 
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
 // PATCH: Update diagnosis (accepted status, clicked_learn, clicked_hwr)
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json() as Record<string, unknown>;
+    const body = await request.json();
     const { diagnosisId, accepted, clickedLearn, clickedHwr } = body as { diagnosisId: string; accepted: boolean; clickedLearn: boolean; clickedHwr: boolean };
 
     if (!diagnosisId) {
@@ -94,7 +94,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Verify diagnosis exists
-    const diagnosis = getDiagnosis(diagnosisId);
+    const diagnosis = await getDiagnosis(diagnosisId);
     if (!diagnosis) {
       return NextResponse.json(
         { error: 'Diagnosis not found' },
@@ -104,17 +104,17 @@ export async function PATCH(request: NextRequest) {
 
     // Update fields if provided
     if (typeof accepted === 'boolean') {
-      updateDiagnosisAccepted(diagnosisId, accepted);
+      await updateDiagnosisAccepted(diagnosisId, accepted);
     }
     if (clickedLearn === true) {
-      updateDiagnosisClickedLearn(diagnosisId);
+      await updateDiagnosisClickedLearn(diagnosisId);
     }
     if (clickedHwr === true) {
-      updateDiagnosisClickedHwr(diagnosisId);
+      await updateDiagnosisClickedHwr(diagnosisId);
     }
 
     // Get updated diagnosis
-    const updatedDiagnosis = getDiagnosis(diagnosisId);
+    const updatedDiagnosis = await getDiagnosis(diagnosisId);
 
     return NextResponse.json({ diagnosis: updatedDiagnosis });
   } catch (error) {

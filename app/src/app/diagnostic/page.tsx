@@ -29,11 +29,10 @@ export default function DiagnosticPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId }),
     })
-      .then((r) => r.json())
+      .then((r) => r.json() as Promise<{ pathAttempt: { id: string } }>)
       .then((data) => {
-        const { pathAttempt } = data as { pathAttempt: { id: string } };
-        setPathAttemptId(pathAttempt.id);
-        sessionStorage.setItem('howwasihacked_path_attempt_id', pathAttempt.id);
+        setPathAttemptId(data.pathAttempt.id);
+        sessionStorage.setItem('howwasihacked_path_attempt_id', data.pathAttempt.id);
       })
       .catch((err) => console.error('Error creating path attempt:', err));
   }, [sessionId]);
