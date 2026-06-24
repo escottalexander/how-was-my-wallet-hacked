@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 // Topic IDs for anchoring and navigation
-type TopicId = 'seed-phrase' | 'scams' | 'browsing' | 'approvals' | 'hot-cold' | 'multisig' | 'after-hacked' | 'checklist';
+type TopicId = 'seed-phrase' | 'scams' | 'browsing' | 'approvals' | 'signing' | 'hot-cold' | 'multisig' | 'after-hacked' | 'checklist';
 
 interface TopicSection {
   id: TopicId;
@@ -34,11 +34,18 @@ const TOPICS: TopicSection[] = [
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] flex-shrink-0">•</span>
-              <span>Store it somewhere physically secure (safe, safety deposit box)</span>
+              <span>
+                Keep more than one copy in separate physical locations, so a fire, flood, or theft in
+                one place doesn&apos;t wipe out your only backup
+              </span>
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] flex-shrink-0">•</span>
-              <span>Never store it digitally - no photos, no cloud, no notes apps</span>
+              <span>Store each copy somewhere physically secure (safe, safety deposit box)</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="text-[var(--primary)] flex-shrink-0">•</span>
+              <span>Never store it digitally - no photos, no cloud, no notes apps, no password managers</span>
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] flex-shrink-0">•</span>
@@ -48,12 +55,29 @@ const TOPICS: TopicSection[] = [
               <span className="text-[var(--primary)] flex-shrink-0">•</span>
               <span>Never enter it into any website</span>
             </li>
+            <li className="flex gap-3">
+              <span className="text-[var(--primary)] flex-shrink-0">•</span>
+              <span>Check on your backups every so often (twice a year is a good habit) to confirm they&apos;re still readable and untouched</span>
+            </li>
           </ul>
         </div>
         <p className="mt-6 p-4 rounded-xl bg-[var(--primary)]/10 text-[var(--foreground)]">
           No legitimate wallet, exchange, or support team will ever ask for your seed phrase. Anyone
           who does is trying to steal from you.
         </p>
+        <p className="text-[var(--text-muted)]">
+          If you ever suspect your seed phrase has been seen, photographed, typed into a device, or
+          copied — treat it as compromised. Generate a brand-new wallet and move everything to it.
+        </p>
+        <div className="mt-2 p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--border)]">
+          <p className="font-semibold text-[var(--foreground)]">Going further (advanced)</p>
+          <p className="text-[var(--text-muted)] mt-1">
+            Experienced users sometimes add a BIP39 passphrase (a secret &quot;25th word&quot;) or split
+            the phrase across multiple backups using Shamir&apos;s Secret Sharing. These raise the bar
+            for an attacker, but they also add ways to permanently lock yourself out — only use them if
+            you fully understand the recovery process.
+          </p>
+        </div>
       </div>
     ),
   },
@@ -201,6 +225,72 @@ const TOPICS: TopicSection[] = [
     ),
   },
   {
+    id: 'signing',
+    title: 'Verify Before You Sign',
+    content: (
+      <div className="space-y-4">
+        <p className="text-lg font-semibold text-[var(--foreground)]">
+          The transaction is the truth — not the website.
+        </p>
+        <p className="text-[var(--text-muted)]">
+          Most drains happen the moment you click &quot;Confirm.&quot; A polished website can ask you to
+          sign something completely different from what it claims. Before you approve anything, check
+          what you&apos;re actually signing.
+        </p>
+        <div className="space-y-6 mt-6">
+          <div>
+            <p className="font-semibold text-[var(--foreground)]">Insist on readable transactions</p>
+            <p className="text-[var(--text-muted)] mt-1">
+              Good wallets translate a transaction into plain language (&quot;send 50 USDC to
+              0x123…&quot;). If your wallet only shows an unreadable string of characters and asks you
+              to &quot;blind sign,&quot; treat that as a red flag and stop.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-[var(--foreground)]">Your hardware wallet screen is the final word</p>
+            <p className="text-[var(--text-muted)] mt-1">
+              Malware can change what your computer or phone displays. The screen on your hardware
+              device can&apos;t be faked the same way. If the details on your computer don&apos;t exactly
+              match the device screen, reject the transaction.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-[var(--foreground)]">Check the recipient, amount, and network</p>
+            <p className="text-[var(--text-muted)] mt-1">
+              Confirm the destination address (not just the first and last few characters), the token
+              and exact amount, and that you&apos;re on the chain you expect.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-[var(--foreground)]">Verify the contract and the site</p>
+            <p className="text-[var(--text-muted)] mt-1">
+              Make sure the contract you&apos;re interacting with matches the official one (check the
+              project&apos;s docs or a block explorer like Etherscan), and that the URL is the real site.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-[var(--foreground)]">Simulate — but stay skeptical</p>
+            <p className="text-[var(--text-muted)] mt-1">
+              Tools like Rabby and Tenderly preview what a transaction will actually do before you
+              sign. They&apos;re a great safety net, but a sophisticated scam can spoof a simulation too,
+              so don&apos;t switch your brain off.
+            </p>
+          </div>
+        </div>
+        <div className="mt-6 p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--border)]">
+          <a
+            href="https://wise-signer.cyfrin.io/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--primary)] hover:underline font-medium"
+          >
+            Practice spotting dangerous transactions at Wise Signer →
+          </a>
+        </div>
+      </div>
+    ),
+  },
+  {
     id: 'hot-cold',
     title: 'Hot/Cold Wallet Model',
     content: (
@@ -232,6 +322,14 @@ const TOPICS: TopicSection[] = [
           The goal: Even if your hot wallet is compromised, your life savings are safe in cold
           storage.
         </p>
+        <div className="mt-2">
+          <p className="font-semibold text-[var(--foreground)]">Buy and download from the source</p>
+          <p className="text-[var(--text-muted)] mt-1">
+            Only buy a hardware wallet directly from the manufacturer, and only download wallet
+            software from official sites. Devices bought second-hand or from third-party marketplaces
+            can arrive pre-tampered, and fake apps are a common way people get drained on day one.
+          </p>
+        </div>
       </div>
     ),
   },
@@ -268,6 +366,27 @@ const TOPICS: TopicSection[] = [
             </li>
           </ul>
         </div>
+        <div className="mt-6">
+          <p className="font-semibold text-[var(--foreground)] mb-3">Setting one up well:</p>
+          <ul className="space-y-3 text-[var(--text-muted)]">
+            <li className="flex gap-3">
+              <span className="text-[var(--primary)] flex-shrink-0">•</span>
+              <span>Spread the keys across different devices, hardware brands, and physical locations — keeping them all in one place defeats the purpose</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="text-[var(--primary)] flex-shrink-0">•</span>
+              <span>Back each key with its own hardware wallet where you can</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="text-[var(--primary)] flex-shrink-0">•</span>
+              <span>Avoid setups where every key is required (like 2-of-2) — lose one and the funds are gone forever. A 2-of-3 lets you survive losing one</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="text-[var(--primary)] flex-shrink-0">•</span>
+              <span>Verify the actual transaction details on each device before approving, just like any other signature</span>
+            </li>
+          </ul>
+        </div>
         <div className="mt-6 p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--border)]">
           <a
             href="https://safe.global"
@@ -295,49 +414,77 @@ const TOPICS: TopicSection[] = [
             <li className="flex gap-3">
               <span className="text-[var(--primary)] font-semibold flex-shrink-0">1.</span>
               <span>
-                <strong className="text-[var(--foreground)]">Don&apos;t use the compromised wallet.</strong>{' '}
-                Any funds sent there will likely be stolen too.
+                <strong className="text-[var(--foreground)]">Don&apos;t send funds to the compromised wallet.</strong>{' '}
+                It&apos;s tempting to send a little ETH to cover gas so you can move your tokens out — but
+                that&apos;s usually a trap. Most compromised wallets are watched by an automated
+                &quot;sweeper&quot; bot that instantly steals anything that lands there, including the
+                gas you just sent.
               </span>
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] font-semibold flex-shrink-0">2.</span>
               <span>
-                <strong className="text-[var(--foreground)]">Create a new wallet</strong> on a clean
-                device with a fresh seed phrase.
+                <strong className="text-[var(--foreground)]">Set up a new wallet on a device you trust.</strong>{' '}
+                Generate a fresh seed phrase on a clean device — ideally a hardware wallet, and not the
+                one that may have been compromised. This is where you&apos;ll move anything you can rescue.
               </span>
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] font-semibold flex-shrink-0">3.</span>
               <span>
-                <strong className="text-[var(--foreground)]">Revoke all token approvals</strong> on
-                the compromised wallet if any funds remain.
+                <strong className="text-[var(--foreground)]">Rescue what&apos;s left — carefully.</strong>{' '}
+                Because of that sweeper bot, simply &quot;sending your tokens out&quot; rarely works. The
+                reliable way is a single atomic transaction that pays the gas and moves your assets in
+                one bundle, so the bot can&apos;t front-run you.
+                <span className="mt-3 block">
+                  If you have more than $1,000 at stake, it&apos;s worth bringing in a specialist. SEAL 911
+                  connects victims with volunteer security responders who can help recover larger amounts.
+                  <a
+                    href="https://securityalliance.org/our-work/seal-911"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[var(--primary)] hover:underline font-medium"
+                  >
+                    {' '}Get help from SEAL 911 →
+                  </a>
+                </span>
+                <span className="mt-3 block">
+                  For smaller amounts, tools built for exactly this can walk you through the rescue
+                  yourself, without your compromised key ever leaving your machine.
+                  <a
+                    href="https://hackedwalletrecovery.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[var(--primary)] hover:underline font-medium"
+                  >
+                    {' '}Try HackedWalletRecovery.com →
+                  </a>
+                </span>
               </span>
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] font-semibold flex-shrink-0">4.</span>
               <span>
-                <strong className="text-[var(--foreground)]">Move any remaining assets</strong>{' '}
-                immediately to your new wallet.
+                <strong className="text-[var(--foreground)]">Assume the device may still be infected.</strong>{' '}
+                If malware could have been involved — you downloaded a file, ran a &quot;test project,&quot;
+                or installed a fake app — a quick antivirus scan isn&apos;t enough. The only way to be
+                confident the threat is gone is a full operating-system reinstall (wipe and reload) on
+                the affected device. Never enter your new seed phrase on a device you don&apos;t fully trust.
               </span>
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] font-semibold flex-shrink-0">5.</span>
               <span>
-                <strong className="text-[var(--foreground)]">Scan your devices</strong> for malware
-                if you downloaded suspicious files.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="text-[var(--primary)] font-semibold flex-shrink-0">6.</span>
-              <span>
-                <strong className="text-[var(--foreground)]">Change passwords</strong> on exchanges
-                and crypto-related accounts.
+                <strong className="text-[var(--foreground)]">Secure your other accounts.</strong>{' '}
+                From a clean device, change passwords on exchanges and crypto-related accounts and turn
+                on hardware-key or app-based 2FA — attackers often go after everything they can reach.
               </span>
             </li>
           </ol>
         </div>
         <p className="mt-6 p-4 rounded-xl bg-[var(--primary)]/10 text-[var(--foreground)]">
-          Remember: the compromised wallet address is now permanently unsafe. Never reuse it.
+          Remember: the compromised wallet address is now permanently unsafe. Never reuse it — not even
+          for a fresh start.
         </p>
       </div>
     ),
@@ -402,6 +549,27 @@ const TOPICS: TopicSection[] = [
               <li className="flex gap-2">
                 <span>☐</span>
                 <span>Verify URLs before connecting wallet</span>
+              </li>
+            </ul>
+          </div>
+          <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--border)]">
+            <p className="font-semibold text-[var(--foreground)] mb-2">Signing &amp; Verification</p>
+            <ul className="space-y-2 text-[var(--text-muted)]">
+              <li className="flex gap-2">
+                <span>☐</span>
+                <span>Wallet shows transactions in readable form (no blind signing)</span>
+              </li>
+              <li className="flex gap-2">
+                <span>☐</span>
+                <span>Recipient, amount, and contract checked before signing</span>
+              </li>
+              <li className="flex gap-2">
+                <span>☐</span>
+                <span>Details confirmed on the hardware wallet screen itself</span>
+              </li>
+              <li className="flex gap-2">
+                <span>☐</span>
+                <span>Hardware wallet bought directly from the manufacturer</span>
               </li>
             </ul>
           </div>
@@ -487,6 +655,20 @@ export default function LearnPage() {
           </div>
         ))}
       </div>
+
+      {/* Read more / source */}
+      <p className="text-center text-[var(--text-muted)]">
+        To read more, visit the{' '}
+        <a
+          href="https://frameworks.securityalliance.org/wallet-security/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[var(--primary)] hover:underline font-medium"
+        >
+          Security Alliance Wallet Security framework
+        </a>
+        .
+      </p>
 
       {/* HackedWalletRecovery callout */}
       <div className="mt-8 p-6 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-center">

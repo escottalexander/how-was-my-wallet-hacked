@@ -11,6 +11,8 @@ export interface Question {
   type: 'single' | 'multi' | 'date' | 'text'
   title: string
   subtitle?: string
+  /** Optional longer teaching note shown as an info callout below the subtitle. */
+  explainer?: string
   options?: QuestionOption[]
   showIf: (answers: AnswerMap) => boolean
   optional?: boolean
@@ -294,6 +296,8 @@ export const QUESTIONS: Question[] = [
     type: 'single',
     title: 'Did you have keys that were not compromised?',
     subtitle: 'If yes — were those keys under the same seed phrase as the ones that were compromised?',
+    explainer:
+      'What counts as the "same seed"? Your seed phrase (the 12 or 24 recovery words) isn\'t tied to one wallet — it can generate a virtually unlimited number of addresses, all derived from that single phrase. Anyone who has your seed phrase can reach every address under it. So "same seed" means those untouched keys came from the same recovery phrase as the ones that were drained.',
     options: [
       { id: 'yes_same_seed', label: "Yes — same seed, but those keys weren't touched", description: 'Some addresses from the same seed were spared' },
       { id: 'yes_different_seed', label: 'Yes — under a different seed or wallet', description: 'Separate wallets or seeds were unaffected' },

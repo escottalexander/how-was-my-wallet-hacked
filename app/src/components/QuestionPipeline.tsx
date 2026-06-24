@@ -41,11 +41,16 @@ function OptionButton({ label, description, selected, onClick, disabled }: Optio
   );
 }
 
-function QuestionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+function QuestionHeader({ title, subtitle, explainer }: { title: string; subtitle?: string; explainer?: string }) {
   return (
     <div className="text-center">
       <h1 className="text-2xl font-semibold text-[var(--foreground)]">{title}</h1>
       {subtitle && <p className="mt-2 text-[var(--text-muted)]">{subtitle}</p>}
+      {explainer && (
+        <p className="mx-auto mt-4 max-w-xl rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3 text-left text-sm leading-relaxed text-[var(--text-muted)]">
+          {explainer}
+        </p>
+      )}
     </div>
   );
 }
@@ -64,7 +69,7 @@ function SingleQuestion({
 }) {
   return (
     <div className="space-y-8">
-      <QuestionHeader title={question.title} subtitle={question.subtitle} />
+      <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} />
       <div className="grid grid-cols-1 gap-4">
         {(question.options ?? []).map((opt) => (
           <OptionButton
@@ -108,7 +113,7 @@ function MultiQuestion({
 
   return (
     <div className="space-y-8">
-      <QuestionHeader title={question.title} subtitle={question.subtitle} />
+      <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} />
       <div className="grid grid-cols-1 gap-4">
         {(question.options ?? []).map((opt) => (
           <OptionButton
@@ -170,7 +175,7 @@ function DateQuestion({
 
   return (
     <div className="space-y-8">
-      <QuestionHeader title={question.title} subtitle={question.subtitle} />
+      <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} />
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="mb-2 block text-sm font-medium text-[var(--text-muted)]">Year</label>
@@ -231,7 +236,7 @@ function TextQuestion({
 }) {
   return (
     <div className="space-y-8">
-      <QuestionHeader title={question.title} subtitle={question.subtitle} />
+      <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} />
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
