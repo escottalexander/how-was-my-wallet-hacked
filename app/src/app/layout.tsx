@@ -55,6 +55,22 @@ const jsonLd = {
       name: SITE_NAME,
       url: SITE_URL,
       description: SITE_DESCRIPTION,
+      logo: `${SITE_URL}/icon.svg`,
+      founder: {
+        "@type": "Person",
+        name: "Elliott Alexander",
+        url: "https://elliottalexander.xyz",
+        sameAs: [
+          "https://github.com/escottalexander",
+          "https://x.com/escottalexander",
+        ],
+      },
+      sameAs: [
+        "https://github.com/escottalexander",
+        "https://x.com/escottalexander",
+        "https://elliottalexander.xyz",
+        "https://hackedwalletrecovery.com",
+      ],
     },
     {
       "@type": "WebSite",
@@ -113,6 +129,30 @@ export default function RootLayout({
             {children}
           </main>
         </SessionProvider>
+        <footer className="mx-auto max-w-3xl px-4 sm:px-6 py-8 border-t border-[var(--border)] text-sm text-[var(--text-muted)]">
+          <nav className="flex flex-wrap gap-x-6 gap-y-2">
+            <Link href="/about" className="hover:text-[var(--primary)] transition-colors">
+              About
+            </Link>
+            <Link href="/learn" className="hover:text-[var(--primary)] transition-colors">
+              Learn
+            </Link>
+            <Link
+              href="/diagnostic"
+              className="hover:text-[var(--primary)] transition-colors"
+            >
+              Diagnostic
+            </Link>
+            <a
+              href="https://github.com/escottalexander"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[var(--primary)] transition-colors"
+            >
+              GitHub
+            </a>
+          </nav>
+        </footer>
       </body>
     </html>
   );
