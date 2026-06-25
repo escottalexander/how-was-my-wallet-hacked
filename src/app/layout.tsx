@@ -106,7 +106,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex min-h-screen flex-col`}
       >
         <header className="sticky top-0 z-50 w-full border-b border-[var(--border)] bg-[var(--card-bg)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--card-bg)]/80">
           <nav className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4 sm:px-6">
@@ -125,7 +125,7 @@ export default function RootLayout({
           </nav>
         </header>
         <SessionProvider>
-          <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+          <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
             {children}
           </main>
         </SessionProvider>
