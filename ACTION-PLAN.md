@@ -19,6 +19,26 @@ Prioritized by impact ÷ effort. Items P1–P5 are the high-leverage fixes; do t
 
 ---
 
+## Phase 2 — Content expansion & trust (done 2026-06-25)
+
+Implemented per `docs/superpowers/plans/2026-06-25-seo-content-pages.md`:
+
+- ✅ **16 `/how/<slug>` attack-vector pages** — SSG, expanded unique content, `Article`+`BreadcrumbList` schema, internal links to diagnostic + learn.
+- ✅ **9 `/learn/<slug>` topic pages** + `/learn` converted to a summary index (no hub/spoke duplication).
+- ✅ **Diagnostic result → `/how` deep-link** connects the `noindex` flow to indexable content.
+- ✅ **`/about` page** (who/methodology/privacy) with `AboutPage`+`Person` schema.
+- ✅ **`Organization` schema enriched** (logo, founder, `sameAs`) + site-wide footer.
+- ✅ **Sitemap = 29 URLs**; all submitted to IndexNow (200/200).
+- Content sourced from shared modules (`src/content/diagnoses.ts`, `learn-topics.tsx`) — single source of truth with the diagnostic flow.
+
+### Still open (user-driven)
+- Google Search Console: submit `sitemap.xml` + request indexing for the new pages.
+- Backlinks outreach (highest long-term lever).
+- Core Web Vitals confirmation (PageSpeed API key).
+- About-page bio one-liner — confirm/edit wording.
+
+---
+
 ## Sequencing notes
 - **Domain chosen: `howwasmywallethacked.com`** (registered 2026-06-25). All absolute URLs (`metadataBase`, sitemap, canonicals, `og:url`) use a single `SITE_URL` constant in `src/lib/site.ts`, so any future domain change is one line.
 - **P1 is the biggest single win** — it converts the site's best content from invisible to indexable and AI-citable.
