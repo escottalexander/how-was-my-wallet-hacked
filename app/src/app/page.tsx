@@ -16,7 +16,7 @@ export default function Home() {
     <div className="flex min-h-[calc(100vh-theme(spacing.14)-theme(spacing.8)*2)] flex-col items-center justify-center text-center">
       <div className="max-w-lg space-y-8 px-4">
         <h1 className="text-3xl font-semibold tracking-tight text-[var(--foreground)] sm:text-4xl">
-          We&apos;re sorry you&apos;re here.
+          We&apos;re sad you&apos;re here.
         </h1>
 
         <div className="space-y-4 text-lg text-[var(--text-muted)] leading-relaxed">
