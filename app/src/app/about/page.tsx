@@ -99,7 +99,7 @@ export default function AboutPage() {
           analytics about which diagnoses are common — never anything that identifies you.
         </p>
         <h2 className="text-lg font-semibold text-[var(--foreground)] pt-2">
-          Already hacked?
+          Need to recover assets stuck in a wallet?
         </h2>
         <p>
           If you need to rescue assets from a compromised wallet, see{" "}
