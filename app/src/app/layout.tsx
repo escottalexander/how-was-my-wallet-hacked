@@ -98,7 +98,7 @@ export default function RootLayout({
               href="/"
               className="font-semibold text-[var(--foreground)] hover:text-[var(--primary)] transition-colors"
             >
-              How Was I Hacked?
+              How Was My Wallet Hacked?
             </Link>
             <Link
               href="/learn"

@@ -1,4 +1,4 @@
-# How Was I Hacked?
+# How Was My Wallet Hacked?
 
 > A free tool that helps crypto users understand how their wallet was most likely
 > compromised, and teaches the security practices that prevent it from happening again.

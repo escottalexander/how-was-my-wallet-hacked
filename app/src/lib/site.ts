@@ -2,7 +2,7 @@
 // Change SITE_URL here if the domain ever moves; everything else derives from it.
 export const SITE_URL = "https://howwasmywallethacked.com";
 
-export const SITE_NAME = "How Was I Hacked?";
+export const SITE_NAME = "How Was My Wallet Hacked?";
 
 export const SITE_DESCRIPTION =
   "Understand how your crypto wallet was compromised and learn to protect yourself going forward.";
