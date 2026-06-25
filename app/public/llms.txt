@@ -1,0 +1,27 @@
+# How Was I Hacked?
+
+> A free tool that helps crypto users understand how their wallet was most likely
+> compromised, and teaches the security practices that prevent it from happening again.
+> No wallet connection, no personal data required.
+
+## What it does
+
+- Walks you through ~15-20 questions about what happened and diagnoses the most likely
+  attack vector (phishing, malicious token approvals, seed-phrase exposure, malware,
+  fake apps, blind signing, and more).
+- Explains clear, practical steps to recover and to protect yourself going forward.
+
+## Key pages
+
+- [Home / Diagnose](https://howwasmywallethacked.com/): Start the guided diagnostic.
+- [Learn Best Practices](https://howwasmywallethacked.com/learn): Seed phrase security,
+  recognizing scams, safe browsing, token approvals, verifying transactions before
+  signing, hot/cold wallet model, multisig, and what to do after being hacked.
+
+## Trusted references this tool points to
+
+- Security Alliance Wallet Security framework
+- SEAL 911 (volunteer security responders for active incidents)
+- revoke.cash (review and revoke token approvals)
+- Safe (multisig wallets)
+- HackedWalletRecovery.com (self-serve recovery for compromised wallets)

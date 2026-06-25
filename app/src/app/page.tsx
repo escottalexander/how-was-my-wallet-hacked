@@ -1,4 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  // Home uses the brand name as its title (no template suffix) and targets the core query.
+  title: {
+    absolute: "How Was I Hacked? Find Out How Your Crypto Wallet Was Compromised",
+  },
+  description:
+    "Hacked or drained? Answer a few questions to understand how your crypto wallet was most likely compromised — and the steps to protect yourself going forward.",
+  alternates: { canonical: "/" },
+};
 
 export default function Home() {
   return (

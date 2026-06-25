@@ -624,6 +624,8 @@ export default function LearnPage() {
             <button
               type="button"
               onClick={() => toggleTopic(topic.id)}
+              aria-expanded={expandedTopic === topic.id}
+              aria-controls={`${topic.id}-panel`}
               className="w-full flex items-center justify-between p-5 text-left hover:bg-[var(--background)] transition-colors"
             >
               <span className="text-lg font-semibold text-[var(--foreground)]">{topic.title}</span>
@@ -649,9 +651,17 @@ export default function LearnPage() {
                 </svg>
               </span>
             </button>
-            {expandedTopic === topic.id && (
-              <div className="px-5 pb-5 animate-fadeIn">{topic.content}</div>
-            )}
+            {/* Content is always rendered into the HTML (so crawlers and AI can
+                read it); the accordion only toggles its visibility. */}
+            <div
+              id={`${topic.id}-panel`}
+              role="region"
+              className={`px-5 pb-5 ${
+                expandedTopic === topic.id ? "animate-fadeIn" : "hidden"
+              }`}
+            >
+              {topic.content}
+            </div>
           </div>
         ))}
       </div>
