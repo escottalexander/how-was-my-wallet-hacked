@@ -37,8 +37,8 @@ export default function AboutPage() {
       </h1>
       <div className="space-y-4 text-[var(--text-muted)]">
         <p>
-          <strong className="text-[var(--foreground)]">{SITE_NAME}</strong> is a free
-          tool that helps people who&apos;ve had crypto stolen understand the most likely
+          <strong className="text-[var(--foreground)]">{SITE_NAME}</strong>{" "}
+          is a free tool that helps people who&apos;ve had crypto stolen understand the most likely
           way their wallet was compromised — and learn the practices that prevent it from
           happening again.
         </p>
@@ -52,7 +52,7 @@ export default function AboutPage() {
           >
             Elliott Alexander
           </a>
-          , a software developer working in the crypto and Ethereum space. You can find him
+          , a software developer working in the Ethereum ecosystem. You can find him
           on{" "}
           <a
             href="https://github.com/escottalexander"
