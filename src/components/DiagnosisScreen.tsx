@@ -2,20 +2,7 @@
 
 import Link from 'next/link';
 import type { DiagnosisType } from '@/lib/probability';
-import { DIAGNOSES } from '@/content/diagnoses';
-
-// Context-specific additions for malicious_transaction based on how they found the site
-const MALICIOUS_TX_CONTEXT: Record<string, string> = {
-  social_media:
-    'Scammers constantly post fake opportunities on Twitter, Discord, and Telegram. They create urgency with "limited time" offers and use bot accounts to make things look popular.',
-  google_search:
-    'Scammers pay for ads that appear above legitimate search results. They also use SEO techniques to rank fake sites highly. Always verify you\'re on the official site.',
-  dm: 'Anyone who DMs you about a crypto opportunity is almost certainly a scammer. Legitimate projects don\'t recruit through unsolicited messages. This is one of the most common attack vectors.',
-  email:
-    'Phishing emails impersonate legitimate projects and exchanges. Always navigate to sites directly rather than clicking email links.',
-  typed_url:
-    'You may have made a typo and landed on a lookalike domain (typosquatting), or the legitimate site itself was compromised. Bookmark official sites and use only those bookmarks.',
-};
+import { DIAGNOSES, MALICIOUS_TX_CONTEXT } from '@/content/diagnoses';
 
 interface DiagnosisScreenProps {
   diagnosisType: DiagnosisType;

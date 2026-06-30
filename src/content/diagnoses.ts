@@ -19,7 +19,26 @@ export interface DiagnosisContent {
   actionItems: string[];
   externalLinks?: { label: string; url: string }[];
   page?: DiagnosisPage;
+  // Forward-looking framing for the prevention flow ("am I at risk"). The lead
+  // risk uses both fields; runner-up risks use only `title`. Everything else
+  // (actionItems, howItWorks, warningSigns, page, externalLinks) is reused as-is.
+  prevention?: { title: string; mainCopy: string[] };
 }
+
+// Context-specific copy for the malicious_transaction result, keyed by how the
+// user found the site. Shared by the diagnostic result screen and the
+// prevention risk result.
+export const MALICIOUS_TX_CONTEXT: Record<string, string> = {
+  social_media:
+    'Scammers constantly post fake opportunities on Twitter, Discord, and Telegram. They create urgency with "limited time" offers and use bot accounts to make things look popular.',
+  google_search:
+    'Scammers pay for ads that appear above legitimate search results. They also use SEO techniques to rank fake sites highly. Always verify you\'re on the official site.',
+  dm: 'Anyone who DMs you about a crypto opportunity is almost certainly a scammer. Legitimate projects don\'t recruit through unsolicited messages. This is one of the most common attack vectors.',
+  email:
+    'Phishing emails impersonate legitimate projects and exchanges. Always navigate to sites directly rather than clicking email links.',
+  typed_url:
+    'You may have made a typo and landed on a lookalike domain (typosquatting), or the legitimate site itself was compromised. Bookmark official sites and use only those bookmarks.',
+};
 
 // All diagnosis content per PRD. Consumed by both the diagnostic result screen
 // (DiagnosisScreen) and the /how/<slug> explainer pages.
@@ -46,6 +65,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['phone_storage', 'digital_storage', 'password_reuse'],
     },
     title: 'Your seed phrase was likely stolen from cloud storage.',
+    prevention: {
+      title: 'Your seed phrase in cloud storage',
+      mainCopy: [
+        'Storing your seed phrase in iCloud, Google Drive, Dropbox, or a synced notes app means anyone who breaks into that account gets your wallet. Cloud accounts are a single, high-value target, and a theft like this leaves no trace on your own devices.',
+      ],
+    },
     mainCopy: [
       'When you store your seed phrase in Google Drive, iCloud, Dropbox, or similar services, anyone who compromises your cloud account has full access to your wallet. Hackers specifically target cloud accounts knowing that people store sensitive information there.',
     ],
@@ -77,6 +102,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['cloud_storage', 'digital_storage', 'malicious_extension'],
     },
     title: 'Your seed phrase was likely stolen from your phone.',
+    prevention: {
+      title: 'A seed phrase photo on your phone',
+      mainCopy: [
+        "A screenshot or photo of your seed phrase doesn't stay on your phone. It backs up to iCloud or Google Photos and is readable by any app with photo access, and some apps actively scan photo libraries for images that look like recovery sheets.",
+      ],
+    },
     mainCopy: [
       'Screenshots and photos are automatically backed up to cloud services, synced across devices, and accessible to apps with photo permissions. Hackers know this and specifically look for seed phrase photos.',
       'Many people make this mistake thinking it\'s a quick, convenient backup. Unfortunately, it\'s one of the easiest ways to lose your funds.',
@@ -110,6 +141,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['cloud_storage', 'clipboard_compromise', 'malicious_download'],
     },
     title: 'Your seed phrase was likely stolen from a file on your computer.',
+    prevention: {
+      title: 'Your seed phrase in a file on your computer',
+      mainCopy: [
+        'A seed phrase saved in a text file, notes app, or document sits in plaintext where info-stealer malware can grab it, and many of those apps quietly sync to the cloud, putting the file in more places than you realize.',
+      ],
+    },
     mainCopy: [
       'Text files, notes apps, and documents on your computer can be accessed by malware, synced to cloud services without you realizing, or found if someone gains access to your machine. Hackers use automated tools to scan computers for anything that looks like a seed phrase.',
     ],
@@ -142,6 +179,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['cloud_storage', 'phishing_fake_site'],
     },
     title: 'Your wallet was likely compromised through password reuse.',
+    prevention: {
+      title: 'Reused passwords guarding your crypto',
+      mainCopy: [
+        'Reusing a password anywhere that protects your crypto means one old breach can unlock your email, cloud storage, or exchange account, and the seed-phrase backup or funds behind them.',
+      ],
+    },
     mainCopy: [
       'When you use the same password across multiple sites, a breach on any one of those sites exposes all your accounts. Hackers buy leaked password databases and automatically try those credentials everywhere - including password managers and crypto-related services.',
       'This is extremely common. Billions of passwords have been leaked over the years.',
@@ -179,6 +222,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['phishing_email', 'malicious_transaction', 'malicious_extension'],
     },
     title: 'You likely entered your seed phrase into a fake website.',
+    prevention: {
+      title: 'Entering your seed phrase on a fake site',
+      mainCopy: [
+        'Fake wallet and dApp sites exist to get you to type your seed phrase to "validate," "sync," or "recover" your wallet. The moment you enter it anywhere online, an attacker can import your wallet and drain it. No legitimate service ever asks for it.',
+      ],
+    },
     mainCopy: [
       'Scammers create convincing copies of legitimate wallet sites, exchanges, and dApps. They use similar domain names, identical designs, and urgent messaging to trick you into entering your seed phrase. The moment you enter it, they have full access to your wallet.',
       'No legitimate service will ever ask for your seed phrase. Ever.',
@@ -212,6 +261,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['digital_storage', 'clipboard_compromise'],
     },
     title: 'Your private key or seed phrase was likely exposed in code or configuration files.',
+    prevention: {
+      title: 'A private key in your code or config',
+      mainCopy: [
+        'A private key pasted into a .env file, config, or script can leak through a commit, a shared file, CI logs, or info-stealer malware. Bots scan public repos continuously and sweep funds within minutes of a key appearing.',
+      ],
+    },
     mainCopy: [
       'Developers sometimes paste private keys into .env files, config files, or code during development. If this code is ever pushed to GitHub, shared with others, or your computer is compromised, that key is exposed. Hackers actively scan public repositories and compromised machines for exposed keys.',
     ],
@@ -245,6 +300,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['malicious_download', 'digital_storage', 'social_engineering_file'],
     },
     title: 'Your seed phrase or private key was likely stolen via clipboard.',
+    prevention: {
+      title: 'Clipboard malware capturing what you copy',
+      mainCopy: [
+        "Anything you copy, including a seed phrase, sits in your clipboard in plaintext where malware can read it. A nastier variant silently swaps a pasted wallet address for the attacker's, so funds go to the thief instead.",
+      ],
+    },
     mainCopy: [
       'When you copy your seed phrase, it sits in your clipboard where malware can read it. Some malware specifically monitors for crypto-related data being copied. Other malware even replaces wallet addresses in your clipboard with the attacker\'s address.',
       'If you\'ve ever copied and pasted your seed phrase, especially on a computer that might have malware, consider it compromised.',
@@ -277,6 +338,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['fake_job_scam', 'malicious_download', 'phishing_email'],
     },
     title: 'You likely installed malware sent to you on Discord or Telegram.',
+    prevention: {
+      title: 'Malware sent over Discord or Telegram',
+      mainCopy: [
+        "Files sent by a friendly stranger, a \"collab partner,\" or a hijacked friend's account can carry info-stealers that harvest seed phrases, wallet data, and clipboard contents. The trust and the plausible reason are the whole point.",
+      ],
+    },
     mainCopy: [
       'Scammers pose as friendly community members, potential business partners, or even "support staff" and send files that contain malware. This malware can steal seed phrases, monitor your clipboard, or take control of your browser extensions.',
       'This is one of the most common attack vectors in crypto. The person who sent you that file was not who they claimed to be.',
@@ -310,6 +377,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['social_engineering_file', 'malicious_download', 'phishing_fake_site'],
     },
     title: 'You likely opened a malicious email attachment.',
+    prevention: {
+      title: 'A malicious email attachment',
+      mainCopy: [
+        'An emailed attachment dressed up as an invoice, resume, or "important document" can install malware that logs keystrokes and steals wallet data, especially if you enable macros or run an executable.',
+      ],
+    },
     mainCopy: [
       'Phishing emails often contain attachments disguised as invoices, documents, or important files. These can install malware that steals your seed phrase, logs your keystrokes, or monitors your crypto activity.',
       'Email phishing has been around for decades, and crypto users are now prime targets.',
@@ -343,6 +416,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['malicious_extension', 'social_engineering_file', 'clipboard_compromise'],
     },
     title: 'You likely downloaded malware from a website.',
+    prevention: {
+      title: 'Malware from a download',
+      mainCopy: [
+        "Fake download pages, malicious ads, and \"cracked\" or free versions of paid software bundle info-stealers that harvest seed phrases, browser-wallet data, and saved passwords, often while the app works exactly as advertised.",
+      ],
+    },
     mainCopy: [
       'Fake download sites, compromised legitimate sites, and malicious ads can all serve malware disguised as legitimate software. This malware then steals your seed phrase, monitors your activity, or takes control of your wallet.',
       'Always verify you\'re downloading from official sources.',
@@ -376,6 +455,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['social_engineering_file', 'malicious_download', 'exposed_in_code'],
     },
     title: 'You were targeted by a fake job or freelance scam.',
+    prevention: {
+      title: 'A fake job or freelance scam',
+      mainCopy: [
+        'Fake recruiters and clients send "test projects," "onboarding documents," or "required software" laced with malware that steals wallets. These campaigns are well-resourced and patient, and they specifically target developers and others likely to hold crypto.',
+      ],
+    },
     mainCopy: [
       'Scammers pose as recruiters or clients and send "test projects," "onboarding documents," or "required software" that contains malware. This is an increasingly common attack targeting developers and freelancers in the crypto space.',
       'The job offer was never real. It was a sophisticated social engineering attack.',
@@ -410,6 +495,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['malicious_download', 'phishing_fake_site', 'malicious_transaction'],
     },
     title: 'You likely installed a malicious browser extension.',
+    prevention: {
+      title: 'A malicious browser extension',
+      mainCopy: [
+        'A browser extension can be granted permission to read and change every page you visit. A fake wallet extension, a hijacked legitimate one, or an over-permissioned utility can capture your seed phrase as you type it or alter a transaction before you sign.',
+      ],
+    },
     mainCopy: [
       'Fake wallet extensions, compromised extensions, or extensions with excessive permissions can steal your seed phrase, modify transactions, or inject malicious code into websites you visit.',
       'Browser extensions have significant access to your browser activity.',
@@ -443,6 +534,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['purchased_wallet_scam', 'compromised_hardware'],
     },
     title: 'The person who helped set up your wallet may have kept your seed phrase.',
+    prevention: {
+      title: 'Someone else who set up your wallet',
+      mainCopy: [
+        "Anyone who has seen your seed phrase controls your wallet forever. If someone else set it up for you or watched you write the phrase down, that's a standing risk, even if they meant well, since their own security could expose it later.",
+      ],
+    },
     mainCopy: [
       'When someone else sees your seed phrase - even someone you trust - they have full access to your wallet forever. They may have written it down, photographed it, or memorized it.',
       'Unfortunately, even well-meaning helpers can later decide to steal funds, or their own security practices may expose your seed phrase.',
@@ -475,6 +572,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['compromised_setup', 'phishing_fake_site'],
     },
     title: "You can't actually buy a wallet. This was a scam.",
+    prevention: {
+      title: 'A pre-loaded or secondhand wallet',
+      mainCopy: [
+        'You can\'t safely buy or accept a wallet someone else created. Whoever generated the seed phrase keeps it forever and can drain the wallet whenever they like. Any "stuck funds" you have to pay gas to claim are bait.',
+      ],
+    },
     mainCopy: [
       'When someone "sells" you a wallet with funds in it, they still know the seed phrase. They will always be able to access that wallet. The "stuck funds" or "locked tokens" were bait to get you to pay them.',
       'No free lunch in crypto, just like everywhere else. If something sounds too good to be true, it probably is.',
@@ -507,6 +610,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['compromised_setup', 'purchased_wallet_scam'],
     },
     title: 'Your hardware wallet may have been pre-compromised.',
+    prevention: {
+      title: 'A tampered hardware wallet',
+      mainCopy: [
+        'A hardware wallet from an Amazon third-party seller, eBay, or another reseller can arrive pre-initialized with a seed phrase the seller already knows. A genuine device makes you generate a fresh phrase yourself on first setup.',
+      ],
+    },
     mainCopy: [
       'Hardware wallets bought from unofficial sources (Amazon third-party sellers, eBay, secondhand) may have been tampered with. Scammers buy devices, extract or pre-generate seed phrases, then resell them as "new."',
       'Always buy hardware wallets directly from the manufacturer.',
@@ -541,6 +650,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       relatedDiagnoses: ['phishing_fake_site', 'malicious_extension', 'fake_job_scam'],
     },
     title: 'You signed a malicious transaction.',
+    prevention: {
+      title: 'Signing a malicious transaction',
+      mainCopy: [
+        'Most drains never touch your seed phrase. They trick you into signing a transaction or token approval that hands an attacker permission to move your assets, then a bot sweeps them out, often within seconds. The transaction, not the website, is the truth.',
+      ],
+    },
     mainCopy: [
       'When you connect your wallet to a site and approve a transaction, you\'re trusting that site to do what it claims. Malicious sites create transactions that look legitimate but actually drain your wallet or grant unlimited access to your tokens.',
     ],
@@ -557,6 +672,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
   },
   unknown: {
     title: "We weren't able to pinpoint exactly how this happened.",
+    prevention: {
+      title: 'No single standout risk',
+      mainCopy: [
+        "Your answers don't point strongly to one attack vector, which usually means your habits are reasonably safe. The practices below close the most common gaps anyway.",
+      ],
+    },
     mainCopy: [
       'The most common causes are:',
       '• Seed phrase stored digitally somewhere you may have forgotten',

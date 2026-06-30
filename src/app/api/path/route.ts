@@ -13,7 +13,7 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sessionId, questionId, answerSelected } = body as { sessionId: string; questionId: string; answerSelected: string };
+    const { sessionId, questionId, answerSelected, mode } = body as { sessionId: string; questionId: string; answerSelected: string; mode?: string };
 
     if (!sessionId) {
       return NextResponse.json(
@@ -31,8 +31,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new path attempt
-    const pathAttempt = await createPathAttempt(sessionId);
+    // Create new path attempt (defaults to the diagnostic flow)
+    const flowMode = mode === 'prevention' ? 'prevention' : 'diagnostic';
+    const pathAttempt = await createPathAttempt(sessionId, flowMode);
 
     // If question and answer provided, create the first step
     let pathStep = null;

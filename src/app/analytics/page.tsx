@@ -113,11 +113,19 @@ function EmptyState({ message }: { message: string }) {
   return <p className="py-6 text-center text-sm text-[var(--text-muted)]">{message}</p>;
 }
 
+type AnalyticsMode = 'diagnostic' | 'prevention';
+
+const MODE_LABELS: Record<AnalyticsMode, string> = {
+  diagnostic: 'Diagnostic (how was I hacked)',
+  prevention: 'Prevention (am I at risk)',
+};
+
 export default function AnalyticsPage() {
   const [data, setData] = useState<AllAnalytics | null>(null);
   const [clusters, setClusters] = useState<ClusterStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<AnalyticsMode>('diagnostic');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -125,8 +133,8 @@ export default function AnalyticsPage() {
     try {
       // days=3650 ≈ all-time for trends-derived views
       const [allRes, clusterRes] = await Promise.all([
-        fetch('/api/analytics?type=all&days=3650'),
-        fetch('/api/analytics?type=clusters'),
+        fetch(`/api/analytics?type=all&days=3650&mode=${mode}`),
+        fetch(`/api/analytics?type=clusters&mode=${mode}`),
       ]);
       if (!allRes.ok) throw new Error(`Analytics request failed (${allRes.status})`);
       const all: AllAnalytics = await allRes.json();
@@ -140,31 +148,75 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     load();
   }, [load]);
 
+  // Persistent header + mode toggle, shown in every state so the user can always
+  // switch between the diagnostic and prevention dashboards.
+  const header = (
+    <div className="space-y-4">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-[var(--foreground)]">Analytics</h1>
+          <p className="mt-1 text-[var(--text-muted)]">
+            Anonymous, aggregate usage data. No personally identifying information is stored.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={load}
+          className="flex-shrink-0 rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition-colors hover:border-[var(--primary)]"
+        >
+          Refresh
+        </button>
+      </div>
+      <div className="inline-flex rounded-xl border border-[var(--border)] p-1">
+        {(Object.keys(MODE_LABELS) as AnalyticsMode[]).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              mode === m
+                ? 'bg-[var(--primary)] text-white'
+                : 'text-[var(--text-muted)] hover:text-[var(--foreground)]'
+            }`}
+          >
+            {MODE_LABELS[m]}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-[var(--text-muted)]">Loading analytics…</div>
+      <div className="space-y-8">
+        {header}
+        <div className="flex min-h-[40vh] items-center justify-center">
+          <div className="text-[var(--text-muted)]">Loading analytics…</div>
+        </div>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
-        <p className="text-red-500">{error ?? 'No analytics available.'}</p>
-        <button
-          type="button"
-          onClick={load}
-          className="rounded-xl border-2 border-[var(--primary)] px-5 py-2 font-medium text-[var(--primary)] transition-colors hover:bg-[var(--primary)]/10"
-        >
-          Retry
-        </button>
+      <div className="space-y-8">
+        {header}
+        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
+          <p className="text-red-500">{error ?? 'No analytics available.'}</p>
+          <button
+            type="button"
+            onClick={load}
+            className="rounded-xl border-2 border-[var(--primary)] px-5 py-2 font-medium text-[var(--primary)] transition-colors hover:bg-[var(--primary)]/10"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -208,22 +260,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-8 animate-fadeIn">
-      {/* Header */}
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-[var(--foreground)]">Analytics</h1>
-          <p className="mt-1 text-[var(--text-muted)]">
-            Anonymous, aggregate usage data. No personally identifying information is stored.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={load}
-          className="flex-shrink-0 rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition-colors hover:border-[var(--primary)]"
-        >
-          Refresh
-        </button>
-      </div>
+      {header}
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">

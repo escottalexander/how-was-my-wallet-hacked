@@ -1,0 +1,23 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+// The header wordmark adapts to context: the prevention tool reads as its own
+// thing ("How hackable are you?") rather than the post-incident brand.
+export function BrandWordmark() {
+  const pathname = usePathname();
+  const isRisk = pathname?.startsWith('/how-hackable-are-you') || pathname?.startsWith('/r/');
+  const label = isRisk ? 'How hackable are you?' : 'How Was My Wallet Hacked?';
+  const href = isRisk ? '/how-hackable-are-you' : '/';
+
+  return (
+    <Link
+      href={href}
+      style={{ fontFamily: 'var(--font-display)' }}
+      className="text-lg font-semibold tracking-tight text-[var(--foreground)] hover:text-[var(--primary)] transition-colors"
+    >
+      {label}
+    </Link>
+  );
+}

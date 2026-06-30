@@ -150,6 +150,12 @@ export default async function HowPage({
         >
           Run the 2-minute diagnostic
         </Link>
+        <p className="mt-4 text-sm text-[var(--text-muted)]">
+          Not been hacked yet?{" "}
+          <Link href="/how-hackable-are-you" className="text-[var(--primary)] hover:underline">
+            Check how exposed you are →
+          </Link>
+        </p>
       </div>
 
       {page.relatedLearn.length > 0 && (

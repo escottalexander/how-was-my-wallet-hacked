@@ -1,12 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Hanken_Grotesk, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { SessionProvider } from "@/components/SessionProvider";
+import { BrandWordmark } from "@/components/BrandWordmark";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/site";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Editorial serif for display, clean grotesk for body.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  axes: ["opsz", "SOFT"],
+});
+
+const hanken = Hanken_Grotesk({
+  variable: "--font-hanken",
   subsets: ["latin"],
 });
 
@@ -106,16 +114,11 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex min-h-screen flex-col`}
+        className={`${fraunces.variable} ${hanken.variable} ${geistMono.variable} antialiased flex min-h-screen flex-col`}
       >
         <header className="sticky top-0 z-50 w-full border-b border-[var(--border)] bg-[var(--card-bg)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--card-bg)]/80">
           <nav className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4 sm:px-6">
-            <Link
-              href="/"
-              className="font-semibold text-[var(--foreground)] hover:text-[var(--primary)] transition-colors"
-            >
-              How Was My Wallet Hacked?
-            </Link>
+            <BrandWordmark />
             <Link
               href="/learn"
               className="text-sm font-medium text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors"
@@ -142,6 +145,12 @@ export default function RootLayout({
               className="hover:text-[var(--primary)] transition-colors"
             >
               Diagnostic
+            </Link>
+            <Link
+              href="/how-hackable-are-you"
+              className="hover:text-[var(--primary)] transition-colors"
+            >
+              How hackable are you?
             </Link>
             <a
               href="https://github.com/escottalexander"

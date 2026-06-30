@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/`, changeFrequency: "monthly", priority: 1 },
     { url: `${SITE_URL}/learn`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE_URL}/diagnostic`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${SITE_URL}/how-hackable-are-you`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${SITE_URL}/about`, changeFrequency: "yearly", priority: 0.5 },
   ];
   const how = HOW_PAGES.map((p) => ({

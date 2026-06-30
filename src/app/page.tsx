@@ -38,6 +38,13 @@ export default function Home() {
         >
           Get Started
         </Link>
+
+        <p className="text-sm text-[var(--text-muted)]">
+          Haven&apos;t been hacked yet?{" "}
+          <Link href="/how-hackable-are-you" className="text-[var(--primary)] hover:underline">
+            Find out how hackable you are →
+          </Link>
+        </p>
       </div>
     </div>
   );

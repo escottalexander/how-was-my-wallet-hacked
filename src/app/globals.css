@@ -1,15 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  /* Mental health app aesthetic - calm, soothing colors */
-  --background: #f8f9fa;
-  --foreground: #2d3436;
-  --primary: #6c5ce7;
-  --primary-hover: #5b4cdb;
-  --text-muted: #636e72;
-  --border: #e0e4e8;
-  --card-bg: #ffffff;
-  --accent: #74b9ff;
+  /* "Field guide" light palette — warm paper, deep ink, evergreen trust.
+     Light mode only. */
+  --background: #f3efe5;      /* warm bone paper */
+  --foreground: #221f19;      /* warm ink */
+  --primary: #1f6a57;         /* deep evergreen-teal */
+  --primary-hover: #17513f;   /* darker on hover */
+  --text-muted: #6f6a5d;      /* warm taupe gray */
+  --border: #e2dccc;          /* soft warm border */
+  --card-bg: #fcfaf4;         /* warm off-white card */
+  --accent: #c4673a;          /* terracotta */
 }
 
 @theme inline {
@@ -21,21 +22,9 @@
   --color-border: var(--border);
   --color-card-bg: var(--card-bg);
   --color-accent: var(--accent);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-hanken);
+  --font-display: var(--font-fraunces);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #1a1d21;
-    --foreground: #e4e6e8;
-    --primary: #a29bfe;
-    --primary-hover: #8b82f5;
-    --text-muted: #a0a8b0;
-    --border: #2d3436;
-    --card-bg: #242830;
-    --accent: #74b9ff;
-  }
 }
 
 html {
@@ -44,53 +33,80 @@ html {
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  /* Soft atmospheric wash so the page isn't a flat fill. */
+  background-image:
+    radial-gradient(55rem 45rem at 50% -12%, rgba(31, 106, 87, 0.08), transparent 62%),
+    radial-gradient(40rem 35rem at 102% 4%, rgba(196, 103, 58, 0.06), transparent 60%);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Prevent horizontal scroll on mobile */
   overflow-x: hidden;
 }
 
-/* Smooth transitions for a calming experience */
-* {
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+/* Headings carry the editorial serif. */
+h1, h2, h3 {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  letter-spacing: -0.018em;
 }
 
-/* Animation for smooth reveal of content */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+::selection {
+  background: rgba(31, 106, 87, 0.16);
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-
-/* Mobile-friendly touch interactions */
-button, a {
+a, button {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Ensure buttons have adequate tap targets */
 button {
   min-height: 44px;
 }
 
-/* Reduced motion support for accessibility */
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 5px;
+}
 
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOutLeft {
+  from { opacity: 1; transform: translateX(0); filter: blur(0); }
+  to { opacity: 0; transform: translateX(-40px); filter: blur(6px); }
+}
+@keyframes slideOutRight {
+  from { opacity: 1; transform: translateX(0); filter: blur(0); }
+  to { opacity: 0; transform: translateX(40px); filter: blur(6px); }
+}
+.animate-slideInRight { animation: slideInRight 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+.animate-slideInLeft { animation: slideInLeft 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+.animate-slideOutLeft { animation: slideOutLeft 0.36s cubic-bezier(0.4, 0, 1, 1) forwards; }
+.animate-slideOutRight { animation: slideOutRight 0.36s cubic-bezier(0.4, 0, 1, 1) forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

@@ -8,7 +8,8 @@ export interface QuestionOption {
 
 export interface Question {
   id: string
-  type: 'single' | 'multi' | 'date' | 'text'
+  // 'wallets' is the prevention-flow wallet-portfolio builder (see WalletBuilder).
+  type: 'single' | 'multi' | 'date' | 'text' | 'wallets'
   title: string
   subtitle?: string
   /** Optional longer teaching note shown as an info callout below the subtitle. */
@@ -16,6 +17,8 @@ export interface Question {
   options?: QuestionOption[]
   showIf: (answers: AnswerMap) => boolean
   optional?: boolean
+  /** Set on per-wallet questions: which wallet, for the section header + title highlight. */
+  walletContext?: { name: string; index: number; total: number }
 }
 
 // Helpers used by showIf conditions
@@ -366,7 +369,13 @@ export const QUESTIONS: Question[] = [
   },
 ]
 
-// Returns only the questions whose showIf condition is true for the given answers
+// Filters any question list down to those whose showIf passes for the answers.
+// Shared by the diagnostic and prevention flows (each supplies its own list).
+export function filterVisible(questions: Question[], answers: AnswerMap): Question[] {
+  return questions.filter((q) => q.showIf(answers))
+}
+
+// Returns the visible diagnostic questions for the given answers.
 export function getVisibleQuestions(answers: AnswerMap): Question[] {
-  return QUESTIONS.filter((q) => q.showIf(answers))
+  return filterVisible(QUESTIONS, answers)
 }

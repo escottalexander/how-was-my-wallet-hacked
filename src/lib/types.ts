@@ -3,6 +3,10 @@
 
 export type WalletType = 'browser_extension' | 'mobile' | 'hardware' | 'other';
 
+// Which flow a path attempt belongs to: the post-incident diagnostic ("how was
+// I hacked") or the preventative risk check ("am I at risk").
+export type FlowMode = 'diagnostic' | 'prevention';
+
 export type ValueRange =
   | 'under_100'
   | 'range_100_1000'
@@ -24,6 +28,7 @@ export interface PathAttempt {
   id: string;
   session_id: string;
   attempt_number: number;
+  mode: FlowMode;
   created_at: string;
   completed_at: string | null;
 }

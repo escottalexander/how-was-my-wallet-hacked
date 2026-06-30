@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { QUESTIONS, getVisibleQuestions, type AnswerMap, type Question } from '@/lib/questions';
+import { QUESTIONS, filterVisible, type AnswerMap, type Question } from '@/lib/questions';
 import { ProgressBar } from '@/components/ProgressBar';
+import { WalletBuilder } from '@/components/WalletBuilder';
 
 interface QuestionPipelineProps {
   onAnswer?: (questionId: string, answer: string | string[]) => void;
   onComplete: (answers: AnswerMap) => void;
   initialAnswers?: AnswerMap;
+  /** Question set to run. Defaults to the diagnostic questions. */
+  questions?: Question[];
 }
 
 interface OptionButtonProps {
@@ -41,10 +44,52 @@ function OptionButton({ label, description, selected, onClick, disabled }: Optio
   );
 }
 
-function QuestionHeader({ title, subtitle, explainer }: { title: string; subtitle?: string; explainer?: string }) {
+// Distinct text accent per wallet, so the highlighted wallet name shifts colour
+// when a new wallet's questions begin.
+const WALLET_TEXT_ACCENTS = [
+  'text-indigo-600',
+  'text-teal-600',
+  'text-amber-600',
+  'text-rose-600',
+  'text-sky-600',
+  'text-violet-600',
+];
+
+// Renders the title with the wallet phrase emphasised (bold + accent colour) so
+// it's clear the question is about that specific wallet.
+function renderTitle(title: string, context?: { name: string; index: number; total: number }): React.ReactNode {
+  if (!context) return title;
+  const idx = title.toLowerCase().indexOf(context.name.toLowerCase());
+  if (idx === -1) return title;
+  const color = WALLET_TEXT_ACCENTS[context.index % WALLET_TEXT_ACCENTS.length];
+  return (
+    <>
+      {title.slice(0, idx)}
+      <span className={`font-semibold ${color}`}>{title.slice(idx, idx + context.name.length)}</span>
+      {title.slice(idx + context.name.length)}
+    </>
+  );
+}
+
+function QuestionHeader({
+  title,
+  subtitle,
+  explainer,
+  context,
+}: {
+  title: string;
+  subtitle?: string;
+  explainer?: string;
+  context?: { name: string; index: number; total: number };
+}) {
   return (
     <div className="text-center">
-      <h1 className="text-2xl font-semibold text-[var(--foreground)]">{title}</h1>
+      {context && (
+        <p className={`mb-3 text-xs font-semibold uppercase tracking-[0.16em] ${WALLET_TEXT_ACCENTS[context.index % WALLET_TEXT_ACCENTS.length]}`}>
+          Wallet {context.index + 1} of {context.total}
+        </p>
+      )}
+      <h1 className="text-2xl font-semibold text-[var(--foreground)]">{renderTitle(title, context)}</h1>
       {subtitle && <p className="mt-2 text-[var(--text-muted)]">{subtitle}</p>}
       {explainer && (
         <p className="mx-auto mt-4 max-w-xl rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3 text-left text-sm leading-relaxed text-[var(--text-muted)]">
@@ -69,7 +114,7 @@ function SingleQuestion({
 }) {
   return (
     <div className="space-y-8">
-      <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} />
+      <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} context={question.walletContext} />
       <div className="grid grid-cols-1 gap-4">
         {(question.options ?? []).map((opt) => (
           <OptionButton
@@ -113,7 +158,7 @@ function MultiQuestion({
 
   return (
     <div className="space-y-8">
-      <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} />
+      <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} context={question.walletContext} />
       <div className="grid grid-cols-1 gap-4">
         {(question.options ?? []).map((opt) => (
           <OptionButton
@@ -175,7 +220,7 @@ function DateQuestion({
 
   return (
     <div className="space-y-8">
-      <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} />
+      <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} context={question.walletContext} />
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="mb-2 block text-sm font-medium text-[var(--text-muted)]">Year</label>
@@ -236,7 +281,7 @@ function TextQuestion({
 }) {
   return (
     <div className="space-y-8">
-      <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} />
+      <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} context={question.walletContext} />
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -275,7 +320,7 @@ function TextQuestion({
   );
 }
 
-export function QuestionPipeline({ onAnswer, onComplete, initialAnswers }: QuestionPipelineProps) {
+export function QuestionPipeline({ onAnswer, onComplete, initialAnswers, questions = QUESTIONS }: QuestionPipelineProps) {
   const [answers, setAnswers] = useState<AnswerMap>(initialAnswers ?? {});
   // Stack of question IDs the user has visited, in order
   const [historyIds, setHistoryIds] = useState<string[]>([]);
@@ -283,7 +328,7 @@ export function QuestionPipeline({ onAnswer, onComplete, initialAnswers }: Quest
   const [pendingMulti, setPendingMulti] = useState<string[]>([]);
   const [pendingText, setPendingText] = useState<string>('');
 
-  const visibleQuestions = useMemo(() => getVisibleQuestions(answers), [answers]);
+  const visibleQuestions = useMemo(() => filterVisible(questions, answers), [answers, questions]);
 
   // Initialize history with the first visible question on mount
   useEffect(() => {
@@ -293,7 +338,7 @@ export function QuestionPipeline({ onAnswer, onComplete, initialAnswers }: Quest
   }, [visibleQuestions, historyIds.length]);
 
   const currentId = historyIds[historyIds.length - 1] ?? null;
-  const currentQuestion = currentId ? QUESTIONS.find((q) => q.id === currentId) ?? null : null;
+  const currentQuestion = currentId ? questions.find((q) => q.id === currentId) ?? null : null;
   const currentVisibleIndex = visibleQuestions.findIndex((q) => q.id === currentId);
   const progress = visibleQuestions.length > 1
     ? currentVisibleIndex / (visibleQuestions.length - 1)
@@ -318,7 +363,7 @@ export function QuestionPipeline({ onAnswer, onComplete, initialAnswers }: Quest
 
   const advance = (newAnswers: AnswerMap, answeredId: string, answer: string | string[]) => {
     onAnswer?.(answeredId, answer);
-    const newVisible = getVisibleQuestions(newAnswers);
+    const newVisible = filterVisible(questions, newAnswers);
     const idx = newVisible.findIndex((q) => q.id === answeredId);
     const nextQ = newVisible[idx + 1];
     if (nextQ) {
@@ -344,6 +389,14 @@ export function QuestionPipeline({ onAnswer, onComplete, initialAnswers }: Quest
   };
 
   const handleDateContinue = (value: string) => {
+    if (!currentId) return;
+    const newAnswers = { ...answers, [currentId]: value };
+    setAnswers(newAnswers);
+    advance(newAnswers, currentId, value);
+  };
+
+  // The wallet builder submits its portfolio as a JSON string (like multi-select).
+  const handleWalletsContinue = (value: string) => {
     if (!currentId) return;
     const newAnswers = { ...answers, [currentId]: value };
     setAnswers(newAnswers);
@@ -414,6 +467,14 @@ export function QuestionPipeline({ onAnswer, onComplete, initialAnswers }: Quest
             value={pendingText}
             onChange={setPendingText}
             onContinue={handleTextContinue}
+          />
+        );
+      case 'wallets':
+        return (
+          <WalletBuilder
+            question={currentQuestion}
+            value={typeof answers[currentQuestion.id] === 'string' ? answers[currentQuestion.id] as string : ''}
+            onContinue={handleWalletsContinue}
           />
         );
       default:

@@ -22,36 +22,39 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type') ?? 'all';
     const days = parseInt(searchParams.get('days') ?? '30', 10);
     const sessionId = searchParams.get('sessionId');
+    // Which flow to report on; defaults to the diagnostic flow so existing
+    // dashboards stay "how was I hacked" only.
+    const mode = searchParams.get('mode') === 'prevention' ? 'prevention' : 'diagnostic';
 
     switch (type) {
       case 'by_wallet_type':
         return NextResponse.json({
-          diagnosisByWalletType: await getDiagnosisByWalletType(),
+          diagnosisByWalletType: await getDiagnosisByWalletType(mode),
         });
 
       case 'by_value_range':
         return NextResponse.json({
-          diagnosisByValueRange: await getDiagnosisByValueRange(),
+          diagnosisByValueRange: await getDiagnosisByValueRange(mode),
         });
 
       case 'path_attempts':
         return NextResponse.json({
-          pathAttemptStats: await getPathAttemptStats(),
+          pathAttemptStats: await getPathAttemptStats(mode),
         });
 
       case 'drop_off':
         return NextResponse.json({
-          dropOffPoints: await getDropOffPoints(),
+          dropOffPoints: await getDropOffPoints(mode),
         });
 
       case 'engagement':
         return NextResponse.json({
-          engagementStats: await getEngagementStats(),
+          engagementStats: await getEngagementStats(mode),
         });
 
       case 'trends':
         return NextResponse.json({
-          diagnosisTrends: await getDiagnosisTrends(days),
+          diagnosisTrends: await getDiagnosisTrends(days, mode),
         });
 
       case 'repeat_visitors':
@@ -72,18 +75,18 @@ export async function GET(request: NextRequest) {
 
       case 'clusters':
         return NextResponse.json({
-          clusters: await getClusterStats(),
+          clusters: await getClusterStats(mode),
         });
 
       case 'all':
       default:
         return NextResponse.json({
-          diagnosisByWalletType: await getDiagnosisByWalletType(),
-          diagnosisByValueRange: await getDiagnosisByValueRange(),
-          pathAttemptStats: await getPathAttemptStats(),
-          dropOffPoints: await getDropOffPoints(),
-          engagementStats: await getEngagementStats(),
-          diagnosisTrends: await getDiagnosisTrends(days),
+          diagnosisByWalletType: await getDiagnosisByWalletType(mode),
+          diagnosisByValueRange: await getDiagnosisByValueRange(mode),
+          pathAttemptStats: await getPathAttemptStats(mode),
+          dropOffPoints: await getDropOffPoints(mode),
+          engagementStats: await getEngagementStats(mode),
+          diagnosisTrends: await getDiagnosisTrends(days, mode),
           repeatVisitorStats: await getRepeatVisitorStats(),
         });
     }

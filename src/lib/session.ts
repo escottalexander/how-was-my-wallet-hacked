@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'node:crypto';
 import { getDb } from './db';
-import type { Session, PathAttempt, PathStep, Diagnosis, WalletType, ValueRange, ClusterStat } from './types';
+import type { Session, PathAttempt, PathStep, Diagnosis, WalletType, ValueRange, ClusterStat, FlowMode } from './types';
 
 // Hash from IP + User Agent for repeat-visitor identification. NOT PII, not reversible.
 export function createUserHash(ip: string, userAgent: string): string {
@@ -52,20 +52,21 @@ export async function getSessionsByUserHash(userHash: string): Promise<Session[]
   return results;
 }
 
-export async function createPathAttempt(sessionId: string): Promise<PathAttempt> {
+export async function createPathAttempt(sessionId: string, mode: FlowMode = 'diagnostic'): Promise<PathAttempt> {
   const db = getDb();
   const id = uuidv4();
   const now = new Date().toISOString();
+  // Number attempts per mode so a prevention run doesn't inflate diagnostic attempt counts.
   const countRow = await db
-    .prepare('SELECT COUNT(*) as count FROM path_attempts WHERE session_id = ?')
-    .bind(sessionId)
+    .prepare('SELECT COUNT(*) as count FROM path_attempts WHERE session_id = ? AND mode = ?')
+    .bind(sessionId, mode)
     .first<{ count: number }>();
   const attemptNumber = (countRow?.count ?? 0) + 1;
   await db
-    .prepare(`INSERT INTO path_attempts (id, session_id, attempt_number, created_at) VALUES (?, ?, ?, ?)`)
-    .bind(id, sessionId, attemptNumber, now)
+    .prepare(`INSERT INTO path_attempts (id, session_id, attempt_number, mode, created_at) VALUES (?, ?, ?, ?, ?)`)
+    .bind(id, sessionId, attemptNumber, mode, now)
     .run();
-  return { id, session_id: sessionId, attempt_number: attemptNumber, created_at: now, completed_at: null };
+  return { id, session_id: sessionId, attempt_number: attemptNumber, mode, created_at: now, completed_at: null };
 }
 
 export async function getLatestPathAttempt(sessionId: string): Promise<PathAttempt | null> {
@@ -214,7 +215,13 @@ export interface EngagementStats {
 export interface DiagnosisTrend { date: string; diagnosis_type: string; count: number }
 export interface RepeatVisitorStats { total_unique_visitors: number; repeat_visitors: number; repeat_rate: number }
 
-export async function getDiagnosisByWalletType(): Promise<DiagnosisByWalletType[]> {
+// The diagnostic flow records an "accepted" result; the prevention flow has no
+// accept step, so prevention stats count every recorded result instead.
+function acceptedClause(mode: FlowMode): string {
+  return mode === 'prevention' ? '' : 'AND d.accepted = 1';
+}
+
+export async function getDiagnosisByWalletType(mode: FlowMode = 'diagnostic'): Promise<DiagnosisByWalletType[]> {
   const db = getDb();
   const { results } = await db
     .prepare(
@@ -222,15 +229,16 @@ export async function getDiagnosisByWalletType(): Promise<DiagnosisByWalletType[
        FROM diagnoses d
        JOIN path_attempts pa ON d.path_attempt_id = pa.id
        JOIN sessions s ON pa.session_id = s.id
-       WHERE s.wallet_type IS NOT NULL AND d.accepted = 1
+       WHERE s.wallet_type IS NOT NULL AND pa.mode = ? ${acceptedClause(mode)}
        GROUP BY s.wallet_type, d.diagnosis_type
        ORDER BY s.wallet_type, count DESC`
     )
+    .bind(mode)
     .all<DiagnosisByWalletType>();
   return results;
 }
 
-export async function getDiagnosisByValueRange(): Promise<DiagnosisByValueRange[]> {
+export async function getDiagnosisByValueRange(mode: FlowMode = 'diagnostic'): Promise<DiagnosisByValueRange[]> {
   const db = getDb();
   const { results } = await db
     .prepare(
@@ -238,36 +246,41 @@ export async function getDiagnosisByValueRange(): Promise<DiagnosisByValueRange[
        FROM diagnoses d
        JOIN path_attempts pa ON d.path_attempt_id = pa.id
        JOIN sessions s ON pa.session_id = s.id
-       WHERE s.value_range IS NOT NULL AND d.accepted = 1
+       WHERE s.value_range IS NOT NULL AND pa.mode = ? ${acceptedClause(mode)}
        GROUP BY s.value_range, d.diagnosis_type
        ORDER BY s.value_range, count DESC`
     )
+    .bind(mode)
     .all<DiagnosisByValueRange>();
   return results;
 }
 
-export async function getPathAttemptStats(): Promise<PathAttemptStats> {
+export async function getPathAttemptStats(mode: FlowMode = 'diagnostic'): Promise<PathAttemptStats> {
   const db = getDb();
+  const accepted = acceptedClause(mode);
   const avgResult = await db
     .prepare(
       `SELECT AVG(pa.attempt_number) as avg_attempts, COUNT(DISTINCT pa.session_id) as total_sessions
        FROM diagnoses d JOIN path_attempts pa ON d.path_attempt_id = pa.id
-       WHERE d.accepted = 1`
+       WHERE pa.mode = ? ${accepted}`
     )
+    .bind(mode)
     .first<{ avg_attempts: number | null; total_sessions: number }>();
   const firstTryResult = await db
     .prepare(
       `SELECT COUNT(DISTINCT pa.session_id) as count
        FROM diagnoses d JOIN path_attempts pa ON d.path_attempt_id = pa.id
-       WHERE d.accepted = 1 AND pa.attempt_number = 1`
+       WHERE pa.mode = ? ${accepted} AND pa.attempt_number = 1`
     )
+    .bind(mode)
     .first<{ count: number }>();
   const multipleResult = await db
     .prepare(
       `SELECT COUNT(DISTINCT pa.session_id) as count
        FROM diagnoses d JOIN path_attempts pa ON d.path_attempt_id = pa.id
-       WHERE d.accepted = 1 AND pa.attempt_number > 1`
+       WHERE pa.mode = ? ${accepted} AND pa.attempt_number > 1`
     )
+    .bind(mode)
     .first<{ count: number }>();
   return {
     avg_attempts_before_accept: avgResult?.avg_attempts ?? 0,
@@ -277,10 +290,19 @@ export async function getPathAttemptStats(): Promise<PathAttemptStats> {
   };
 }
 
-export async function getDropOffPoints(): Promise<DropOffPoint[]> {
+export async function getDropOffPoints(mode: FlowMode = 'diagnostic'): Promise<DropOffPoint[]> {
   const db = getDb();
   const reached = (
-    await db.prepare(`SELECT question_id, COUNT(*) as total_reached FROM path_steps GROUP BY question_id`).all<{ question_id: string; total_reached: number }>()
+    await db
+      .prepare(
+        `SELECT ps.question_id, COUNT(*) as total_reached
+         FROM path_steps ps
+         JOIN path_attempts pa ON ps.path_attempt_id = pa.id
+         WHERE pa.mode = ?
+         GROUP BY ps.question_id`
+      )
+      .bind(mode)
+      .all<{ question_id: string; total_reached: number }>()
   ).results;
   const completed = (
     await db
@@ -289,8 +311,10 @@ export async function getDropOffPoints(): Promise<DropOffPoint[]> {
          FROM path_steps ps
          JOIN path_attempts pa ON ps.path_attempt_id = pa.id
          JOIN diagnoses d ON d.path_attempt_id = pa.id
+         WHERE pa.mode = ?
          GROUP BY ps.question_id`
       )
+      .bind(mode)
       .all<{ question_id: string; completed: number }>()
   ).results;
   const completedMap = new Map(completed.map((c) => [c.question_id, c.completed]));
@@ -308,13 +332,16 @@ export async function getDropOffPoints(): Promise<DropOffPoint[]> {
     .sort((a, b) => b.drop_off_rate - a.drop_off_rate);
 }
 
-export async function getEngagementStats(): Promise<EngagementStats> {
+export async function getEngagementStats(mode: FlowMode = 'diagnostic'): Promise<EngagementStats> {
   const db = getDb();
   const result = await db
     .prepare(
-      `SELECT COUNT(*) as total_diagnoses, SUM(clicked_learn) as clicked_learn_count, SUM(clicked_hwr) as clicked_hwr_count
-       FROM diagnoses`
+      `SELECT COUNT(*) as total_diagnoses, SUM(d.clicked_learn) as clicked_learn_count, SUM(d.clicked_hwr) as clicked_hwr_count
+       FROM diagnoses d
+       JOIN path_attempts pa ON d.path_attempt_id = pa.id
+       WHERE pa.mode = ?`
     )
+    .bind(mode)
     .first<{ total_diagnoses: number; clicked_learn_count: number | null; clicked_hwr_count: number | null }>();
   const total = result?.total_diagnoses ?? 0;
   const learn = result?.clicked_learn_count ?? 0;
@@ -328,17 +355,18 @@ export async function getEngagementStats(): Promise<EngagementStats> {
   };
 }
 
-export async function getDiagnosisTrends(days: number = 30): Promise<DiagnosisTrend[]> {
+export async function getDiagnosisTrends(days: number = 30, mode: FlowMode = 'diagnostic'): Promise<DiagnosisTrend[]> {
   const db = getDb();
   const { results } = await db
     .prepare(
-      `SELECT date(created_at) as date, diagnosis_type, COUNT(*) as count
-       FROM diagnoses
-       WHERE created_at >= date('now', '-' || ? || ' days')
-       GROUP BY date(created_at), diagnosis_type
+      `SELECT date(d.created_at) as date, d.diagnosis_type, COUNT(*) as count
+       FROM diagnoses d
+       JOIN path_attempts pa ON d.path_attempt_id = pa.id
+       WHERE pa.mode = ? AND d.created_at >= date('now', '-' || ? || ' days')
+       GROUP BY date(d.created_at), d.diagnosis_type
        ORDER BY date ASC, count DESC`
     )
-    .bind(days)
+    .bind(mode, days)
     .all<DiagnosisTrend>();
   return results;
 }
@@ -368,7 +396,7 @@ export async function completePathAttempt(id: string): Promise<void> {
   await db.prepare(`UPDATE path_attempts SET completed_at = datetime('now') WHERE id = ?`).bind(id).run();
 }
 
-export async function getClusterStats(): Promise<ClusterStat[]> {
+export async function getClusterStats(mode: FlowMode = 'diagnostic'): Promise<ClusterStat[]> {
   const db = getDb();
   const { results } = await db
     .prepare(
@@ -382,11 +410,12 @@ export async function getClusterStats(): Promise<ClusterStat[]> {
        JOIN path_steps ps_wallet ON ps_wallet.path_attempt_id = pa.id AND ps_wallet.question_id = 'wallet_generated'
        JOIN path_steps ps_date ON ps_date.path_attempt_id = pa.id AND ps_date.question_id = 'key_generation_date'
        JOIN diagnoses d ON d.path_attempt_id = pa.id
-       WHERE pa.completed_at IS NOT NULL AND ps_date.answer_selected != 'unknown'
+       WHERE pa.mode = ? AND pa.completed_at IS NOT NULL AND ps_date.answer_selected != 'unknown'
        GROUP BY wallet, generation_period, diagnosis
        HAVING COUNT(*) > 1
        ORDER BY COUNT(*) DESC`
     )
+    .bind(mode)
     .all<ClusterStat>();
   return results;
 }
