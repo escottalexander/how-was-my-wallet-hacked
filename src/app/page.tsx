@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     absolute: "How Was My Wallet Hacked? Find Out How Your Crypto Was Compromised",
   },
   description:
-    "Hacked or drained? Answer a few questions to understand how your crypto wallet was most likely compromised — and the steps to protect yourself going forward.",
+    "Hacked or drained? Answer a few questions to understand how your crypto wallet was most likely compromised, and the steps to protect yourself going forward.",
   alternates: { canonical: "/" },
 };
 
@@ -24,7 +24,7 @@ export default function Home() {
             Getting hacked is one of the worst feelings in crypto. We know how much it hurts.
           </p>
           <p>
-            This tool will help you understand what likely happened so you can protect yourself going forward. We&apos;ll ask around 15&ndash;20 questions &mdash; some may not apply to you.
+            This tool will help you understand what likely happened so you can protect yourself going forward. We&apos;ll ask around 15&ndash;20 questions. Some may not apply to you.
           </p>
         </div>
 

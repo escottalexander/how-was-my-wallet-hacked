@@ -344,7 +344,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Clusters */}
-      <Section title="Clusters" hint="Repeated wallet + key-generation-period + diagnosis combinations — possible coordinated incidents.">
+      <Section title="Clusters" hint="Repeated wallet + key-generation-period + diagnosis combinations, a sign of possible coordinated incidents.">
         {clusters.length === 0 ? (
           <EmptyState message="No clusters detected yet." />
         ) : (

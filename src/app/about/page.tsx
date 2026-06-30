@@ -4,7 +4,7 @@ import { SITE_URL, SITE_NAME } from "@/lib/site";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Who's behind How Was My Wallet Hacked?, how the diagnostic works, and our privacy stance — no wallet connection and no personal data.",
+    "Who's behind How Was My Wallet Hacked?, how the diagnostic works, and our privacy stance: no wallet connection and no personal data.",
   alternates: { canonical: "/about" },
 };
 
@@ -39,7 +39,7 @@ export default function AboutPage() {
         <p>
           <strong className="text-[var(--foreground)]">{SITE_NAME}</strong>{" "}
           is a free tool that helps people who&apos;ve had crypto stolen understand the most likely
-          way their wallet was compromised — and learn the practices that prevent it from
+          way their wallet was compromised, and learn the practices that prevent it from
           happening again.
         </p>
         <p>
@@ -96,7 +96,7 @@ export default function AboutPage() {
         <p>
           There&apos;s no wallet connection, and we never ask for your seed phrase, private
           key, or any personal information. The tool only stores anonymized, aggregate
-          analytics about which diagnoses are common — never anything that identifies you.
+          analytics about which diagnoses are common, never anything that identifies you.
         </p>
         <h2 className="text-lg font-semibold text-[var(--foreground)] pt-2">
           Need to recover assets stuck in a wallet?

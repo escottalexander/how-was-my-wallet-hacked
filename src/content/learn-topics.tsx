@@ -20,7 +20,7 @@ export const LEARN_TOPICS: LearnTopic[] = [
     slug: 'seed-phrase-security',
     title: 'Seed Phrase Security',
     summary:
-      'Your seed phrase is the master key to your wallet. Here’s how to store it so no one — malware, cloud sync, or a thief — can ever reach it.',
+      'Your seed phrase is the master key to your wallet. Here’s how to store it so no one (malware, cloud sync, or a thief) can ever reach it.',
     seoTitle: 'Seed Phrase Security: Store Your Recovery Phrase Safely',
     seoDescription:
       'Your seed phrase controls your entire wallet. Learn the simple rules for storing it offline so it can never be stolen, copied, or synced to the cloud.',
@@ -77,14 +77,14 @@ export const LEARN_TOPICS: LearnTopic[] = [
         </p>
         <p className="text-[var(--text-muted)]">
           If you ever suspect your seed phrase has been seen, photographed, typed into a device, or
-          copied — treat it as compromised. Generate a brand-new wallet and move everything to it.
+          copied, treat it as compromised. Generate a brand-new wallet and move everything to it.
         </p>
         <div className="mt-2 p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--border)]">
           <p className="font-semibold text-[var(--foreground)]">Going further (advanced)</p>
           <p className="text-[var(--text-muted)] mt-1">
             Experienced users sometimes add a BIP39 passphrase (a secret &quot;25th word&quot;) or split
             the phrase across multiple backups using Shamir&apos;s Secret Sharing. These raise the bar
-            for an attacker, but they also add ways to permanently lock yourself out — only use them if
+            for an attacker, but they also add ways to permanently lock yourself out. Only use them if
             you fully understand the recovery process.
           </p>
         </div>
@@ -161,7 +161,7 @@ export const LEARN_TOPICS: LearnTopic[] = [
       'Where you click decides what gets drained. Bookmark official sites, distrust ads and DMs, and verify URLs before connecting your wallet.',
     seoTitle: 'Safe Browsing Habits for Crypto Wallet Users',
     seoDescription:
-      'Fake sites and malicious ads are how many wallets get drained. Learn the browsing habits — bookmarks, URL checks, ad-skipping — that keep you safe.',
+      'Fake sites and malicious ads are how many wallets get drained. Learn the browsing habits (bookmarks, URL checks, ad-skipping) that keep you safe.',
     relatedHow: ['phishing_fake_site', 'malicious_download', 'malicious_extension'],
     content: (
       <div className="space-y-4">
@@ -268,7 +268,7 @@ export const LEARN_TOPICS: LearnTopic[] = [
     content: (
       <div className="space-y-4">
         <p className="text-lg font-semibold text-[var(--foreground)]">
-          The transaction is the truth — not the website.
+          The transaction is the truth, not the website.
         </p>
         <p className="text-[var(--text-muted)]">
           Most drains happen the moment you click &quot;Confirm.&quot; A polished website can ask you to
@@ -307,7 +307,7 @@ export const LEARN_TOPICS: LearnTopic[] = [
             </p>
           </div>
           <div>
-            <p className="font-semibold text-[var(--foreground)]">Simulate — but stay skeptical</p>
+            <p className="font-semibold text-[var(--foreground)]">Simulate, but stay skeptical</p>
             <p className="text-[var(--text-muted)] mt-1">
               Tools like Rabby and Tenderly preview what a transaction will actually do before you
               sign. They&apos;re a great safety net, but a sophisticated scam can spoof a simulation too,
@@ -344,8 +344,8 @@ export const LEARN_TOPICS: LearnTopic[] = [
           Think checking account vs. savings account.
         </p>
         <p className="text-[var(--text-muted)]">
-          A hot wallet is connected to the internet—convenient for daily use, but more vulnerable. A
-          cold wallet (hardware wallet) stays offline—less convenient, but much more secure.
+          A hot wallet is connected to the internet: convenient for daily use, but more vulnerable. A
+          cold wallet (hardware wallet) stays offline: less convenient, but much more secure.
         </p>
         <div className="mt-6 space-y-6">
           <div>
@@ -402,15 +402,15 @@ export const LEARN_TOPICS: LearnTopic[] = [
           <ul className="space-y-3 text-[var(--text-muted)]">
             <li className="flex gap-3">
               <span className="text-[var(--primary)] flex-shrink-0">•</span>
-              <span>No single point of failure—one compromised key can&apos;t drain funds</span>
+              <span>No single point of failure, so one compromised key can&apos;t drain funds</span>
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] flex-shrink-0">•</span>
-              <span>Lost key recovery—2-of-3 means you can lose one key and still access funds</span>
+              <span>Lost-key recovery: 2-of-3 means you can lose one key and still access funds</span>
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] flex-shrink-0">•</span>
-              <span>Social recovery—trusted family/friends can help in emergencies</span>
+              <span>Social recovery: trusted family or friends can help in emergencies</span>
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] flex-shrink-0">•</span>
@@ -423,7 +423,7 @@ export const LEARN_TOPICS: LearnTopic[] = [
           <ul className="space-y-3 text-[var(--text-muted)]">
             <li className="flex gap-3">
               <span className="text-[var(--primary)] flex-shrink-0">•</span>
-              <span>Spread the keys across different devices, hardware brands, and physical locations — keeping them all in one place defeats the purpose</span>
+              <span>Spread the keys across different devices, hardware brands, and physical locations, since keeping them all in one place defeats the purpose</span>
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] flex-shrink-0">•</span>
@@ -431,7 +431,7 @@ export const LEARN_TOPICS: LearnTopic[] = [
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] flex-shrink-0">•</span>
-              <span>Avoid setups where every key is required (like 2-of-2) — lose one and the funds are gone forever. A 2-of-3 lets you survive losing one</span>
+              <span>Avoid setups where every key is required (like 2-of-2). Lose one and the funds are gone forever. A 2-of-3 lets you survive losing one</span>
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] flex-shrink-0">•</span>
@@ -457,7 +457,7 @@ export const LEARN_TOPICS: LearnTopic[] = [
     slug: 'what-to-do-after-being-hacked',
     title: 'What To Do After Being Hacked',
     summary:
-      'Act fast, but stay calm. The right first moves — don’t fund the hacked wallet, set up a clean one, rescue assets carefully — can save what’s left.',
+      'Act fast, but stay calm. The right first moves (don’t fund the hacked wallet, set up a clean one, rescue assets carefully) can save what’s left.',
     seoTitle: 'What To Do After Your Crypto Wallet Is Hacked',
     seoDescription:
       'Just had crypto stolen? Learn the immediate steps: don’t send gas to the hacked wallet, set up a clean wallet, rescue assets safely, and secure your other accounts.',
@@ -474,7 +474,7 @@ export const LEARN_TOPICS: LearnTopic[] = [
               <span className="text-[var(--primary)] font-semibold flex-shrink-0">1.</span>
               <span>
                 <strong className="text-[var(--foreground)]">Don&apos;t send funds to the compromised wallet.</strong>{' '}
-                It&apos;s tempting to send a little ETH to cover gas so you can move your tokens out — but
+                It&apos;s tempting to send a little ETH to cover gas so you can move your tokens out, but
                 that&apos;s usually a trap. Most compromised wallets are watched by an automated
                 &quot;sweeper&quot; bot that instantly steals anything that lands there, including the
                 gas you just sent.
@@ -484,14 +484,14 @@ export const LEARN_TOPICS: LearnTopic[] = [
               <span className="text-[var(--primary)] font-semibold flex-shrink-0">2.</span>
               <span>
                 <strong className="text-[var(--foreground)]">Set up a new wallet on a device you trust.</strong>{' '}
-                Generate a fresh seed phrase on a clean device — ideally a hardware wallet, and not the
+                Generate a fresh seed phrase on a clean device, ideally a hardware wallet, and not the
                 one that may have been compromised. This is where you&apos;ll move anything you can rescue.
               </span>
             </li>
             <li className="flex gap-3">
               <span className="text-[var(--primary)] font-semibold flex-shrink-0">3.</span>
               <span>
-                <strong className="text-[var(--foreground)]">Rescue what&apos;s left — carefully.</strong>{' '}
+                <strong className="text-[var(--foreground)]">Rescue what&apos;s left, carefully.</strong>{' '}
                 Because of that sweeper bot, simply &quot;sending your tokens out&quot; rarely works. The
                 reliable way is a single atomic transaction that pays the gas and moves your assets in
                 one bundle, so the bot can&apos;t front-run you.
@@ -525,8 +525,8 @@ export const LEARN_TOPICS: LearnTopic[] = [
               <span className="text-[var(--primary)] font-semibold flex-shrink-0">4.</span>
               <span>
                 <strong className="text-[var(--foreground)]">Assume the device may still be infected.</strong>{' '}
-                If malware could have been involved — you downloaded a file, ran a &quot;test project,&quot;
-                or installed a fake app — a quick antivirus scan isn&apos;t enough. The only way to be
+                If malware could have been involved (you downloaded a file, ran a &quot;test project,&quot;
+                or installed a fake app), a quick antivirus scan isn&apos;t enough. The only way to be
                 confident the threat is gone is a full operating-system reinstall (wipe and reload) on
                 the affected device. Never enter your new seed phrase on a device you don&apos;t fully trust.
               </span>
@@ -536,13 +536,13 @@ export const LEARN_TOPICS: LearnTopic[] = [
               <span>
                 <strong className="text-[var(--foreground)]">Secure your other accounts.</strong>{' '}
                 From a clean device, change passwords on exchanges and crypto-related accounts and turn
-                on hardware-key or app-based 2FA — attackers often go after everything they can reach.
+                on hardware-key or app-based 2FA. Attackers often go after everything they can reach.
               </span>
             </li>
           </ol>
         </div>
         <p className="mt-6 p-4 rounded-xl bg-[var(--primary)]/10 text-[var(--foreground)]">
-          Remember: the compromised wallet address is now permanently unsafe. Never reuse it — not even
+          Remember: the compromised wallet address is now permanently unsafe. Never reuse it, not even
           for a fresh start.
         </p>
       </div>
@@ -553,7 +553,7 @@ export const LEARN_TOPICS: LearnTopic[] = [
     slug: 'security-checklist',
     title: 'Security Checklist',
     summary:
-      'A quick self-audit covering seed-phrase storage, wallet architecture, browsing, signing, and account security — everything in one place.',
+      'A quick self-audit covering seed-phrase storage, wallet architecture, browsing, signing, and account security, all in one place.',
     seoTitle: 'Crypto Wallet Security Checklist',
     seoDescription:
       'A practical crypto security checklist: seed-phrase storage, hot/cold wallet setup, safe browsing, signing discipline, and account hardening. Audit yourself in minutes.',

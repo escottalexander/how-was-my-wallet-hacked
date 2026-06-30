@@ -214,7 +214,7 @@ function DateQuestion({
           ${disabled ? 'cursor-not-allowed opacity-50' : ''}
         `}
       >
-        {year && quarter ? 'Continue' : "I'm not sure — skip"}
+        {year && quarter ? 'Continue' : "I'm not sure, skip it"}
       </button>
     </div>
   );
