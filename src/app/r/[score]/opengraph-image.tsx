@@ -3,11 +3,8 @@ import { ImageResponse } from 'next/og';
 export const alt = 'Find out how hackable you are';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return Array.from({ length: 101 }, (_, i) => ({ score: String(i) }));
-}
+// Generated on demand per request (proven to work at runtime on Cloudflare).
+export const dynamic = 'force-dynamic';
 
 function band(score: number): { label: string; color: string } {
   if (score >= 76) return { label: 'Strong', color: '#34d399' };

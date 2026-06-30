@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_URL } from "@/lib/site";
 
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return Array.from({ length: 101 }, (_, i) => ({ score: String(i) }));
-}
+// Rendered on demand: OpenNext/Cloudflare doesn't reliably serve prerendered
+// HTML for this nested dynamic route, so we render per request and clamp the
+// score (any value 0-100 is valid; anything else is coerced into range).
+export const dynamic = "force-dynamic";
 
 const clampScore = (raw: string): number => Math.max(0, Math.min(100, parseInt(raw, 10) || 0));
 
