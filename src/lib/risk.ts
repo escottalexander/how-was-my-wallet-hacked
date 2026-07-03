@@ -273,7 +273,7 @@ export function assessRisk(answers: AnswerMap): RiskAssessment {
       const penalty = 14;
       wr.issues.push({
         vector: 'compromised_setup',
-        reason: `${cap(wr.label)}: most of your crypto behind one hardware key — a single leak loses it all; a multisig needs several keys to move funds`,
+        reason: `${cap(wr.label)}: most of your crypto behind one hardware key — a single leak loses it all; a multisig needs several keys to move funds, so it is the safer choice`,
         points: penalty,
         recommendation: true,
       });
