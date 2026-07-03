@@ -359,10 +359,10 @@ export function RiskResult() {
               {wr.issues.length > 0 ? (
                 <ul className="mt-4 space-y-2">
                   {wr.issues.slice(0, 3).map((iss, k) => {
-                    const page = DIAGNOSES[iss.vector].page;
+                    const page = iss.recommendation ? null : DIAGNOSES[iss.vector].page;
                     return (
                       <li key={k} className="flex flex-wrap items-center gap-x-2 text-sm text-[var(--text-muted)]">
-                        <span className="text-[var(--primary)]">•</span>
+                        <span className="text-[var(--primary)]">{iss.recommendation ? '★' : '•'}</span>
                         <span>{issueText(iss.reason)}</span>
                         {page && (
                           <Link href={`/how/${page.slug}`} className="text-[var(--primary)] hover:underline">

@@ -24,6 +24,9 @@ export interface WalletIssue {
   vector: DiagnosisType;
   reason: string;
   points: number;
+  // Architecture advice (e.g. "consider a multisig"), not an attack vector — it
+  // still dings the score, but is excluded from the "top weak spot" lead.
+  recommendation?: boolean;
 }
 
 export interface WalletRisk {
@@ -258,6 +261,28 @@ export function assessRisk(answers: AnswerMap): RiskAssessment {
     wr.shareOfTotal = totalWeight > 0 ? (AMOUNT_WEIGHT[wr.amount] ?? 0) / totalWeight : walletRisks.length ? 1 / walletRisks.length : 0;
   });
 
+  // Portfolio flag: most of your crypto sitting behind a single hardware key,
+  // with no multisig anywhere, is a single point of failure — one leaked key and
+  // it's all gone, where a multisig needs several. Nudge toward a multisig. Runs
+  // before the overall so it counts, and is marked as advice (not a weak-spot).
+  const hasMultisig = wallets.some((w) => w.type === 'multisig');
+  if (!hasMultisig) {
+    walletRisks.forEach((wr) => {
+      const significant = (AMOUNT_WEIGHT[wr.amount] ?? 0) >= AMOUNT_WEIGHT['range_10000_50000']; // $10k+
+      if (wr.type !== 'hardware' || !significant || wr.shareOfTotal <= 0.5) return;
+      const penalty = 14;
+      wr.issues.push({
+        vector: 'compromised_setup',
+        reason: `${cap(wr.label)}: most of your crypto behind one hardware key — a single leak loses it all; a multisig needs several keys to move funds`,
+        points: penalty,
+        recommendation: true,
+      });
+      wr.issues.sort((a, b) => b.points - a.points);
+      wr.score = clamp(wr.score - penalty, 0, 100);
+      wr.band = securityBand(wr.score);
+    });
+  }
+
   // Overall: weight each wallet by how much of your crypto sits in it, with a
   // slight extra emphasis on the weaker wallets so a poorly-secured wallet
   // holding a big chunk of your holdings drags the score down harder.
@@ -275,7 +300,10 @@ export function assessRisk(answers: AnswerMap): RiskAssessment {
   walletRisks.forEach((wr) => {
     const w = wallets.find((x) => x.id === wr.id);
     const aw = w ? AMOUNT_WEIGHT[w.amount] ?? 1 : 1;
-    wr.issues.forEach((iss) => vectorWeight.set(iss.vector, (vectorWeight.get(iss.vector) ?? 0) + iss.points * aw));
+    wr.issues.forEach((iss) => {
+      if (iss.recommendation) return; // advice, not a weak spot
+      vectorWeight.set(iss.vector, (vectorWeight.get(iss.vector) ?? 0) + iss.points * aw);
+    });
   });
   const topVector =
     Array.from(vectorWeight.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'unknown';
