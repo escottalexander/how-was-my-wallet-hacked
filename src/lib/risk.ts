@@ -36,7 +36,8 @@ export interface WalletRisk {
   amount: AmountBand;
   shareOfTotal: number; // 0-1, fraction of total holdings in this wallet
   score: number; // 0-100 security score (higher is better)
-  ceiling: number; // max score this wallet type allows (i.e. with zero issues)
+  ceiling: number; // max score this wallet type/config allows (i.e. with zero issues)
+  ceilingNote?: string; // why the ceiling is below 100 (shown in the bar tooltip)
   band: SecurityBand;
   issues: WalletIssue[]; // weakest spots first
 }
@@ -86,13 +87,20 @@ function architectureRisk(w: WalletEntry, phoneOs?: string): number {
       const hw = w.msigHardwareCount ?? 0;
       if (m < 2) return 30; // 1-of-n is effectively a single key
       const softwareCount = n - hw;
-      // If software keys alone can't reach threshold, an attacker needs a
-      // hardware key — much harder.
-      let b = softwareCount < m ? 10 : 16 + 24 * (softwareCount / n);
       const axes = (w.msigSeparation ?? []).filter((s) => s !== 'together').length;
-      b -= axes * 5; // each independent separation axis lowers correlated-compromise risk
-      if (axes === 0) b += 6;
-      return clamp(b, 0, 30); // a well-separated multisig can reach a perfect score
+      if (softwareCount < m) {
+        // Reaching the threshold requires a hardware key — the strongest setup.
+        // Only incomplete key separation holds it back from a perfect score.
+        return clamp(8 - axes * 3, 0, 12);
+      }
+      // Software keys alone can reach the threshold, but an attacker still has to
+      // compromise m *separate* keys — hard, and harder the more are required and
+      // the better they're separated. A software-only path exists, though, so it
+      // stays just shy of a perfect score.
+      let b = 40 / m + Math.max(0, softwareCount - m) * 1.5;
+      b -= axes * 2.5;
+      if (axes === 0) b += 4;
+      return clamp(b, 5, 30);
     }
     default:
       return 30;
@@ -117,6 +125,7 @@ function scoreWallet(
   const phoneOs = typeof phoneOsRaw === 'string' ? phoneOsRaw : undefined;
   const arch = architectureRisk(w, phoneOs);
   let score = arch;
+  let ceilingNote: string | undefined;
   const issues: WalletIssue[] = [];
   const add = (pts: number, vector: DiagnosisType, reason: string) => {
     if (pts <= 0) return;
@@ -171,8 +180,17 @@ function scoreWallet(
   } else if (w.type === 'multisig') {
     const m = w.msigThreshold ?? 2;
     const n = w.msigSigners ?? 2;
-    const hardwareRequired = n - (w.msigHardwareCount ?? 0) < m;
+    const softwareCount = n - (w.msigHardwareCount ?? 0);
+    const hardwareRequired = softwareCount < m;
     const signerScale = hardwareRequired ? 0.3 : 1;
+    // Explain any ceiling below 100 for the score-bar tooltip (config-specific,
+    // not "wallet type"): the usual cause is that software signers alone can
+    // reach the threshold, so no hardware key is needed to move funds.
+    if (!hardwareRequired) {
+      ceilingNote = `${softwareCount} of your ${n} signers are software wallets, so those keys alone can reach the ${m}-of-${n} threshold — an attacker wouldn't need a hardware key. Requiring a hardware key to sign would raise the ceiling.`;
+    } else {
+      ceilingNote = `Separating your keys across devices, locations, and people raises the ceiling — a fully separated, hardware-required multisig reaches 100.`;
+    }
     const signer = answers[wk(i, 'signer_exposure')];
     if (signer === 'several') add(14 * signerScale, 'malicious_download', `${L}: several signer devices see everyday use`);
     else if (signer === 'one') add(5 * signerScale, 'malicious_download', `${L}: a signer device is used day-to-day`);
@@ -229,7 +247,7 @@ function scoreWallet(
   const security = 100 - clamp(Math.round(score), 0, 100);
   const ceiling = 100 - clamp(Math.round(arch), 0, 100); // best this wallet type/config allows
   issues.sort((a, b) => b.points - a.points);
-  return { id: w.id, type: w.type, label: walletLabel(w), amount: w.amount, shareOfTotal: 0, score: security, ceiling, band: securityBand(security), issues };
+  return { id: w.id, type: w.type, label: walletLabel(w), amount: w.amount, shareOfTotal: 0, score: security, ceiling, ceilingNote, band: securityBand(security), issues };
 }
 
 export function assessRisk(answers: AnswerMap): RiskAssessment {

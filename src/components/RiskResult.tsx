@@ -99,7 +99,7 @@ function ScoreBar({
           role="tooltip"
           className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-64 max-w-[80vw] -translate-x-1/2 rounded-lg border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--text-muted)] opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
         >
-          <span className="font-medium text-[var(--foreground)]">Capped at {ceiling} by wallet type.</span>{' '}
+          <span className="font-medium text-[var(--foreground)]">Capped at {ceiling}.</span>{' '}
           {typeNote}
         </div>
       )}
@@ -354,7 +354,7 @@ export function RiskResult() {
                 </div>
               </div>
               <div className="mt-3">
-                <ScoreBar score={wr.score} band={wr.band} ceiling={wr.ceiling} typeNote={TYPE_NOTE[wr.type]} />
+                <ScoreBar score={wr.score} band={wr.band} ceiling={wr.ceiling} typeNote={wr.ceilingNote ?? TYPE_NOTE[wr.type]} />
               </div>
               {wr.issues.length > 0 ? (
                 <ul className="mt-4 space-y-2">
