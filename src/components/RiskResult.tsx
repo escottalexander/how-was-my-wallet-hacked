@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { AnswerMap } from '@/lib/questions';
 import { assessRisk, type RiskAssessment, type SecurityBand } from '@/lib/risk';
-import { AMOUNT_OPTIONS } from '@/lib/wallet-portfolio';
+import { AMOUNT_OPTIONS, type PortfolioWalletType } from '@/lib/wallet-portfolio';
 import { DIAGNOSES } from '@/content/diagnoses';
 import { LEARN_TOPICS } from '@/content/learn-topics';
 import { SITE_URL } from '@/lib/site';
@@ -16,6 +16,24 @@ const BAND: Record<SecurityBand, { label: string; color: string; bar: string }> 
   good: { label: 'Good', color: 'text-emerald-600', bar: 'bg-emerald-500' },
   fair: { label: 'Fair', color: 'text-amber-600', bar: 'bg-amber-500' },
   weak: { label: 'Weak', color: 'text-red-600', bar: 'bg-red-500' },
+};
+
+// Why a wallet can't reach 100 even with perfect habits: its type sets an
+// inherent-risk baseline (see architectureRisk in lib/risk). Surfacing this
+// keeps a capped score from looking unexplained next to "nothing to flag".
+const TYPE_NOTE: Record<PortfolioWalletType, string> = {
+  browser_extension:
+    'Browser-extension wallets stay connected to the internet, so they carry built-in exposure — even flawless habits top out around 62.',
+  mobile:
+    'Mobile wallets are online and live on an everyday device, so they start with some built-in risk — a well-kept one tops out around 74.',
+  hardware:
+    'Hardware wallets keep keys offline, so they start from a strong baseline — up to 86 with careful habits.',
+  multisig:
+    'Multisig spreads control across several keys; how many are hardware and how well they’re separated sets the ceiling (a strong setup can reach the 90s).',
+  exchange:
+    'On a custodial account the exchange holds the keys, so the score leans on their controls and your login — it tops out around 74.',
+  other:
+    'You chose “Other,” so we can’t assess the setup and apply a moderate baseline (caps at 64). Pick a specific wallet type for a sharper score.',
 };
 
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
@@ -238,8 +256,11 @@ export function RiskResult() {
                   })}
                 </ul>
               ) : (
-                <p className="mt-4 text-sm text-green-500">Nothing to flag here.</p>
+                <p className="mt-4 text-sm text-green-500">Nothing to flag in how you use it.</p>
               )}
+              {/* Explains the score's inherent-risk floor so a capped number
+                  (e.g. a clean wallet at 64) doesn't look unexplained. */}
+              <p className="mt-3 text-xs text-[var(--text-muted)]">{TYPE_NOTE[wr.type]}</p>
             </div>
           ))}
         </div>
