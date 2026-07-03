@@ -91,16 +91,16 @@ function architectureRisk(w: WalletEntry, phoneOs?: string): number {
       if (softwareCount < m) {
         // Reaching the threshold requires a hardware key — the strongest setup.
         // Only incomplete key separation holds it back from a perfect score.
-        return clamp(8 - axes * 3, 0, 12);
+        return clamp(6 - axes * 2, 0, 8);
       }
       // Software keys alone can reach the threshold, but an attacker still has to
       // compromise m *separate* keys — hard, and harder the more are required and
       // the better they're separated. A software-only path exists, though, so it
-      // stays just shy of a perfect score.
-      let b = 40 / m + Math.max(0, softwareCount - m) * 1.5;
-      b -= axes * 2.5;
+      // stays just shy of a perfect score (best case ~96).
+      let b = 40 / m + Math.max(0, softwareCount - m) * 3;
+      b -= axes * 3;
       if (axes === 0) b += 4;
-      return clamp(b, 5, 30);
+      return clamp(b, 4, 30);
     }
     default:
       return 30;
