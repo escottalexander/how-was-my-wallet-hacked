@@ -26,7 +26,7 @@ const TYPE_NOTE: Record<PortfolioWalletType, string> = {
   browser_extension:
     'Browser-extension wallets keep the signing key on an internet-connected device, so even careful habits can’t make them fully airtight.',
   mobile:
-    'Mobile wallets are online and live on an everyday device, so they can’t quite reach a hardware wallet’s ceiling.',
+    'Mobile wallets run on an internet-connected phone; strong OS sandboxing (iOS especially) lifts the ceiling, but it still can’t match cold storage.',
   hardware:
     'Hardware wallets can reach a perfect score — the keys stay offline.',
   multisig:

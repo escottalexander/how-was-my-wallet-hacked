@@ -65,12 +65,14 @@ export function securityBand(score: number): SecurityBand {
 // or a well-formed multisig has no baseline handicap — their score is decided by
 // how you actually use them. Always-online types (browser, mobile), custodial
 // exchanges, and unknown ("other") keep a floor, so a clean one tops out ~70-74.
-function architectureRisk(w: WalletEntry): number {
+function architectureRisk(w: WalletEntry, phoneOs?: string): number {
   switch (w.type) {
     case 'browser_extension':
       return 30;
     case 'mobile':
-      return 26;
+      // iOS's strong app sandboxing gives it a lower baseline (ceiling 84) than
+      // Android or an unknown OS (ceiling 74).
+      return phoneOs === 'ios' ? 16 : 26;
     case 'exchange':
       return 26;
     case 'hardware':
@@ -108,7 +110,9 @@ function scoreWallet(
   strengths: Set<string>,
 ): WalletRisk {
   const L = cap(walletLabel(w));
-  const arch = architectureRisk(w);
+  const phoneOsRaw = answers[wk(i, 'phone_os')];
+  const phoneOs = typeof phoneOsRaw === 'string' ? phoneOsRaw : undefined;
+  const arch = architectureRisk(w, phoneOs);
   let score = arch;
   const issues: WalletIssue[] = [];
   const add = (pts: number, vector: DiagnosisType, reason: string) => {
@@ -140,8 +144,7 @@ function scoreWallet(
   } else if (w.type === 'mobile') {
     addSeed(1);
     const src = answers[wk(i, 'app_source')];
-    const os = answers[wk(i, 'phone_os')];
-    if (src === 'sideloaded') add(os === 'android' ? 22 : 18, 'malicious_download', `${L}: installed outside the official app store`);
+    if (src === 'sideloaded') add(phoneOs === 'android' ? 22 : 18, 'malicious_download', `${L}: installed outside the official app store`);
     else if (src === 'not_sure') add(6, 'malicious_download', `${L}: unsure where the app came from`);
     else if (src === 'official_store') strengths.add('You install mobile wallets from official stores');
   } else if (w.type === 'hardware') {
