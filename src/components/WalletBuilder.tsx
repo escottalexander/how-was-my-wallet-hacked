@@ -128,11 +128,11 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
 
   // ---- Build the current step's content ----
   const startScreen = (
-    <div className="flex min-h-[60vh] flex-col justify-center space-y-8">
+    <div className="flex min-h-[40vh] flex-col justify-center space-y-8">
       <div className="text-center">
-        <h1 className="text-2xl font-semibold text-[var(--foreground)]">
+        <h2 className="text-2xl font-semibold text-[var(--foreground)]">
           {wallets.length > 0 ? 'Add another wallet' : question.title}
-        </h1>
+        </h2>
         {wallets.length === 0 && question.subtitle && (
           <p className="mx-auto mt-2 max-w-xl text-[var(--text-muted)]">{question.subtitle}</p>
         )}
