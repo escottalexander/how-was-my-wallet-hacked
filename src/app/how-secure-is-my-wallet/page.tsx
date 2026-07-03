@@ -12,7 +12,7 @@ export default function HowSecureIsMyWalletPage() {
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-[var(--text-muted)]">
           Map your wallets and answer a few quick questions to get a 0–100 crypto wallet
-          security score, with the exact weak spots to fix. No wallet connection, no balances shared.
+          security score, with the exact weak spots to fix.
         </p>
       </header>
       <PreventionFlow />
