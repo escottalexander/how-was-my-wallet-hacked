@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Your Security Score",
   robots: { index: false, follow: true },
-  alternates: { canonical: "/how-hackable-are-you" },
+  alternates: { canonical: "/how-secure-is-my-wallet" },
 };
 
 export default function RiskResultLayout({

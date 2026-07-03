@@ -41,7 +41,7 @@ export default function Home() {
 
         <p className="text-sm text-[var(--text-muted)]">
           Haven&apos;t been hacked yet?{" "}
-          <Link href="/how-hackable-are-you" className="text-[var(--primary)] hover:underline">
+          <Link href="/how-secure-is-my-wallet" className="text-[var(--primary)] hover:underline">
             See how secure your wallet is →
           </Link>
         </p>

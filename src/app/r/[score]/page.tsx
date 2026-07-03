@@ -23,7 +23,7 @@ export async function generateMetadata({
     description,
     // The score-specific landing isn't worth indexing; crawlers still read OG.
     robots: { index: false, follow: true },
-    alternates: { canonical: "/how-hackable-are-you" },
+    alternates: { canonical: "/how-secure-is-my-wallet" },
     openGraph: {
       type: "website",
       title,
@@ -56,7 +56,7 @@ export default async function ShareLanding({
           weak spots to fix. No wallet connection, no balances shared.
         </p>
         <Link
-          href="/how-hackable-are-you"
+          href="/how-secure-is-my-wallet"
           className="inline-flex h-12 min-w-[180px] items-center justify-center rounded-full bg-[var(--primary)] px-8 text-base font-medium text-white shadow-sm hover:bg-[var(--primary-hover)] transition-colors"
         >
           Check my wallet

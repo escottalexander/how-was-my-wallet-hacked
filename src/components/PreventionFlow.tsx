@@ -74,7 +74,7 @@ export function PreventionFlow() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pathAttemptId, complete: true }),
     }).catch(() => {});
-    router.push('/how-hackable-are-you/result');
+    router.push('/how-secure-is-my-wallet/result');
   };
 
   if (isLoading || (!pathAttemptId && !error)) {

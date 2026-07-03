@@ -150,7 +150,7 @@ export default function RootLayout({
               Diagnostic
             </Link>
             <Link
-              href="/how-hackable-are-you"
+              href="/how-secure-is-my-wallet"
               className="hover:text-[var(--primary)] transition-colors"
             >
               How secure is my wallet?

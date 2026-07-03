@@ -7,9 +7,9 @@ import { usePathname } from 'next/navigation';
 // thing ("How secure is my wallet?") rather than the post-incident brand.
 export function BrandWordmark() {
   const pathname = usePathname();
-  const isRisk = pathname?.startsWith('/how-hackable-are-you') || pathname?.startsWith('/r/');
+  const isRisk = pathname?.startsWith('/how-secure-is-my-wallet') || pathname?.startsWith('/r/');
   const label = isRisk ? 'How secure is my wallet?' : 'How Was My Wallet Hacked?';
-  const href = isRisk ? '/how-hackable-are-you' : '/';
+  const href = isRisk ? '/how-secure-is-my-wallet' : '/';
 
   return (
     <Link
