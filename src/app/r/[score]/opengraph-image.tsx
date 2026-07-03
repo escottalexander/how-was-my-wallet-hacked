@@ -65,6 +65,13 @@ export default async function Image({ params }: { params: Promise<{ score: strin
         </div>
       </div>
     ),
-    { ...size },
+    {
+      ...size,
+      // The card is deterministic per score, so let crawlers/CDNs cache it —
+      // fast, reliable link-preview unfurls (Telegram, Farcaster, Discord…).
+      headers: {
+        'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800',
+      },
+    },
   );
 }

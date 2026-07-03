@@ -152,6 +152,25 @@ export function RiskResult() {
       .catch((err) => console.error('Error recording risk result:', err));
   }, [data]);
 
+  // Pre-fetch the shareable card so the mobile "Share" button can attach it
+  // within the tap gesture (iOS requires navigator.share to run synchronously).
+  useEffect(() => {
+    if (!data) return;
+    const score = data.assessment.overallScore;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/r/${score}/opengraph-image`);
+        if (!res.ok || cancelled) return;
+        const blob = await res.blob();
+        if (!cancelled) setImageFile(new File([blob], `wallet-security-score-${score}.png`, { type: 'image/png' }));
+      } catch {
+        /* image share just won't be available */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [data]);
+
   const trackClick = (field: 'clickedLearn' | 'clickedHwr') => {
     if (!diagnosisId) return;
     fetch('/api/diagnosis', {
@@ -271,9 +290,13 @@ export function RiskResult() {
           <button
             type="button"
             onClick={() => {
-              const opening = !shareOpen;
-              setShareOpen(opening);
-              if (opening) void getImageFile(); // warm the image so sharing is instant
+              // Mobile: go straight to the native share sheet with the image
+              // attached. Desktop (no file sharing): open the save/links menu.
+              if (canShareImage) {
+                void shareImage();
+                return;
+              }
+              setShareOpen((o) => !o);
             }}
             className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition-colors hover:border-[var(--primary)]"
           >
@@ -289,14 +312,9 @@ export function RiskResult() {
           {shareOpen && (
             <>
               <button type="button" aria-label="Close" onClick={() => setShareOpen(false)} className="fixed inset-0 z-10 cursor-default" />
-              <div className="absolute top-full left-1/2 z-20 mt-2 w-52 -translate-x-1/2 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-1.5 text-left shadow-lg">
-                {canShareImage && (
-                  <button type="button" onClick={shareImage} className={`${menuItem} font-medium text-[var(--primary)]`}>
-                    Share image…
-                  </button>
-                )}
-                <button type="button" onClick={downloadImage} className={menuItem}>
-                  Save image
+              <div className="absolute top-full left-1/2 z-20 mt-2 w-56 -translate-x-1/2 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-1.5 text-left shadow-lg">
+                <button type="button" onClick={downloadImage} className={`${menuItem} font-medium text-[var(--primary)]`}>
+                  Save image to post
                 </button>
                 <a href={xUrl} target="_blank" rel="noopener noreferrer" onClick={() => { trackClick('clickedLearn'); setShareOpen(false); }} className={menuItem}>
                   Share on X

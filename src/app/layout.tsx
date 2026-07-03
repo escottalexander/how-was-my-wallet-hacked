@@ -147,7 +147,7 @@ export default function RootLayout({
               href="/diagnostic"
               className="hover:text-[var(--primary)] transition-colors"
             >
-              Diagnostic
+              How was my wallet hacked?
             </Link>
             <Link
               href="/how-secure-is-my-wallet"
