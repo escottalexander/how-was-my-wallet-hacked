@@ -33,6 +33,7 @@ export interface WalletRisk {
   amount: AmountBand;
   shareOfTotal: number; // 0-1, fraction of total holdings in this wallet
   score: number; // 0-100 security score (higher is better)
+  ceiling: number; // max score this wallet type allows (i.e. with zero issues)
   band: SecurityBand;
   issues: WalletIssue[]; // weakest spots first
 }
@@ -60,8 +61,10 @@ export function securityBand(score: number): SecurityBand {
 }
 
 // Inherent risk floor from a wallet's type and configuration, before hygiene.
-// Capped at 30 so a wallet with no flagged issues never scores below 70 — the
-// baseline reflects wallet type, but a clean setup should still read as decent.
+// Structurally sound types can reach 0 here (a perfect 100): a hardware wallet
+// or a well-formed multisig has no baseline handicap — their score is decided by
+// how you actually use them. Always-online types (browser, mobile), custodial
+// exchanges, and unknown ("other") keep a floor, so a clean one tops out ~70-74.
 function architectureRisk(w: WalletEntry): number {
   switch (w.type) {
     case 'browser_extension':
@@ -71,7 +74,7 @@ function architectureRisk(w: WalletEntry): number {
     case 'exchange':
       return 26;
     case 'hardware':
-      return 14;
+      return 0; // structurally sound; weak seed handling is penalized heavily below
     case 'multisig': {
       const m = w.msigThreshold ?? 2;
       const n = w.msigSigners ?? 2;
@@ -84,7 +87,7 @@ function architectureRisk(w: WalletEntry): number {
       const axes = (w.msigSeparation ?? []).filter((s) => s !== 'together').length;
       b -= axes * 5; // each independent separation axis lowers correlated-compromise risk
       if (axes === 0) b += 6;
-      return clamp(b, 4, 30);
+      return clamp(b, 0, 30); // a well-separated multisig can reach a perfect score
     }
     default:
       return 30;
@@ -105,7 +108,8 @@ function scoreWallet(
   strengths: Set<string>,
 ): WalletRisk {
   const L = cap(walletLabel(w));
-  let score = architectureRisk(w);
+  const arch = architectureRisk(w);
+  let score = arch;
   const issues: WalletIssue[] = [];
   const add = (pts: number, vector: DiagnosisType, reason: string) => {
     if (pts <= 0) return;
@@ -115,19 +119,19 @@ function scoreWallet(
 
   const seed = asArray(answers[wk(i, 'seed_locations')]);
   const addSeed = (scale: number) => {
-    if (seed.includes('cloud')) add(24 * scale, 'cloud_storage', `${L}: recovery phrase in cloud storage`);
-    if (seed.includes('phone_photo')) add(20 * scale, 'phone_storage', `${L}: recovery phrase saved as a photo`);
-    if (seed.includes('file')) add(15 * scale, 'digital_storage', `${L}: recovery phrase in a file or notes app`);
-    if (seed.includes('in_code')) add(24 * scale, 'exposed_in_code', `${L}: recovery phrase has been in code or a .env file`);
+    if (seed.includes('cloud')) add(40 * scale, 'cloud_storage', `${L}: recovery phrase in cloud storage`);
+    if (seed.includes('phone_photo')) add(32 * scale, 'phone_storage', `${L}: recovery phrase saved as a photo`);
+    if (seed.includes('file')) add(20 * scale, 'digital_storage', `${L}: recovery phrase in a file or notes app`);
+    if (seed.includes('in_code')) add(40 * scale, 'exposed_in_code', `${L}: recovery phrase has been in code or a .env file`);
     if (seed.includes('password_manager')) add(5 * scale, 'digital_storage', `${L}: recovery phrase in a password manager`);
-    if (seed.includes('someone_has_copy')) add(18 * scale, 'compromised_setup', `${L}: someone else has a copy of the phrase`);
+    if (seed.includes('someone_has_copy')) add(28 * scale, 'compromised_setup', `${L}: someone else has a copy of the phrase`);
     if (seed.length > 0 && seed.every((s) => s === 'offline')) strengths.add('Your recovery phrases are kept offline only');
   };
 
   if (w.type === 'browser_extension') {
     addSeed(1);
     const habits = asArray(answers[wk(i, 'device_habits')]);
-    if (habits.includes('use_cracked_software')) add(18, 'malicious_download', `${L}: cracked software on this computer`);
+    if (habits.includes('use_cracked_software')) add(28, 'malicious_download', `${L}: cracked software on this computer`);
     if (habits.includes('download_crypto_apps')) add(10, 'malicious_download', `${L}: you download crypto apps on this computer`);
     if (habits.includes('run_code_or_dev')) add(10, 'fake_job_scam', `${L}: you run code or do dev work on this computer`);
     if (habits.includes('install_extensions')) add(10, 'malicious_extension', `${L}: you install other browser extensions here`);
@@ -141,7 +145,17 @@ function scoreWallet(
     else if (src === 'not_sure') add(6, 'malicious_download', `${L}: unsure where the app came from`);
     else if (src === 'official_store') strengths.add('You install mobile wallets from official stores');
   } else if (w.type === 'hardware') {
-    addSeed(1);
+    // A hardware wallet's entire value is the seed staying offline. Any digital
+    // copy defeats the device, so it's penalized like a hot wallet — a single
+    // big hit rather than the scaled, method-by-method model, since the specific
+    // digital method matters far less than the fact that it's digital at all.
+    if (seed.some((s) => s === 'cloud' || s === 'in_code' || s === 'phone_photo' || s === 'file')) {
+      add(72, 'digital_storage', `${L}: recovery phrase stored digitally — this defeats the hardware wallet`);
+    } else if (seed.includes('password_manager')) {
+      add(34, 'digital_storage', `${L}: recovery phrase in a password manager, not offline`);
+    }
+    if (seed.includes('someone_has_copy')) add(28, 'compromised_setup', `${L}: someone else has a copy of the phrase`);
+    if (seed.length > 0 && seed.every((s) => s === 'offline')) strengths.add('Your recovery phrases are kept offline only');
     const seen = answers[wk(i, 'seed_seen')];
     if (seen === 'helped_by_someone') add(10, 'compromised_setup', `${L}: someone helped set it up and saw the backup`);
     if (seen === 'professional_or_stranger') add(18, 'compromised_setup', `${L}: a stranger or "helper" saw the backup`);
@@ -157,7 +171,7 @@ function scoreWallet(
     if (signer === 'several') add(14 * signerScale, 'malicious_download', `${L}: several signer devices see everyday use`);
     else if (signer === 'one') add(5 * signerScale, 'malicious_download', `${L}: a signer device is used day-to-day`);
     else if (signer === 'none') strengths.add('Your multisig signers stay off everyday devices');
-    addSeed(0.4); // one leaked signer backup is below threshold
+    addSeed(0.3); // one leaked signer backup stays below threshold — others still protect
     const sep = w.msigSeparation ?? [];
     if (hardwareRequired) strengths.add('Your multisig needs a hardware key to move funds');
     else if ((w.msigHardwareCount ?? 0) > 0) strengths.add('Hardware-backed multisig signers');
@@ -207,8 +221,9 @@ function scoreWallet(
 
   // Flip accumulated exposure into a security score (higher = better).
   const security = 100 - clamp(Math.round(score), 0, 100);
+  const ceiling = 100 - clamp(Math.round(arch), 0, 100); // best this wallet type/config allows
   issues.sort((a, b) => b.points - a.points);
-  return { id: w.id, type: w.type, label: walletLabel(w), amount: w.amount, shareOfTotal: 0, score: security, band: securityBand(security), issues };
+  return { id: w.id, type: w.type, label: walletLabel(w), amount: w.amount, shareOfTotal: 0, score: security, ceiling, band: securityBand(security), issues };
 }
 
 export function assessRisk(answers: AnswerMap): RiskAssessment {

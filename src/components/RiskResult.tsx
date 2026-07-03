@@ -18,22 +18,23 @@ const BAND: Record<SecurityBand, { label: string; color: string; bar: string }> 
   weak: { label: 'Weak', color: 'text-red-600', bar: 'bg-red-500' },
 };
 
-// Why a wallet can't reach 100 even with perfect habits: its type sets an
-// inherent-risk baseline (see architectureRisk in lib/risk). Surfacing this
-// keeps a capped score from looking unexplained next to "nothing to flag".
+// Why some wallet types can't reach 100 even with perfect habits: their type
+// sets an inherent-risk ceiling (see architectureRisk in lib/risk). Shown in the
+// score bar's hover tooltip so a capped score never looks unexplained. Hardware
+// and a well-formed multisig have no ceiling, so their notes rarely surface.
 const TYPE_NOTE: Record<PortfolioWalletType, string> = {
   browser_extension:
-    'Browser-extension wallets stay connected to the internet, so they carry built-in exposure — even flawless habits top out around 70.',
+    'Browser-extension wallets keep the signing key on an internet-connected device, so even careful habits can’t make them fully airtight.',
   mobile:
-    'Mobile wallets are online and live on an everyday device, so they start with some built-in risk — a well-kept one tops out around 74.',
+    'Mobile wallets are online and live on an everyday device, so they can’t quite reach a hardware wallet’s ceiling.',
   hardware:
-    'Hardware wallets keep keys offline, so they start from a strong baseline — up to 86 with careful habits.',
+    'Hardware wallets can reach a perfect score — the keys stay offline.',
   multisig:
-    'Multisig spreads control across several keys; how many are hardware and how well they’re separated sets the ceiling (a strong setup can reach the 90s).',
+    'A well-separated multisig can reach a perfect score; fewer required keys or less key separation lowers the ceiling.',
   exchange:
-    'On a custodial account the exchange holds the keys, so the score leans on their controls and your login — it tops out around 74.',
+    'On a custodial account the exchange holds the keys, so the ceiling reflects that you’re trusting their controls and your login.',
   other:
-    'You chose “Other,” so we can’t assess the setup and apply a moderate baseline (caps at 70). Pick a specific wallet type for a sharper score.',
+    'You chose “Other,” so we can’t assess the setup and apply a moderate baseline. Pick a specific wallet type for a sharper score.',
 };
 
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
@@ -60,10 +61,48 @@ function readRisk(): StoredRisk | null {
   return { pathAttemptId, assessment: assessRisk(answers) };
 }
 
-function ScoreBar({ score, band }: { score: number; band: SecurityBand }) {
+function ScoreBar({
+  score,
+  band,
+  ceiling = 100,
+  typeNote,
+}: {
+  score: number;
+  band: SecurityBand;
+  ceiling?: number;
+  typeNote?: string;
+}) {
+  const cappedPct = Math.max(0, Math.min(100, 100 - ceiling));
+  const showCap = cappedPct > 0.5 && !!typeNote;
   return (
-    <div className="h-2 overflow-hidden rounded bg-[var(--background)]">
-      <div className={`h-full rounded ${BAND[band].bar} transition-[width] duration-500`} style={{ width: `${score}%` }} />
+    <div className="group relative">
+      <div
+        className="relative h-2 w-full overflow-hidden rounded bg-[var(--background)]"
+        tabIndex={showCap ? 0 : undefined}
+        aria-label={showCap ? `Security score ${score} out of ${ceiling} — the most this wallet type allows` : undefined}
+      >
+        <div className={`absolute inset-y-0 left-0 rounded ${BAND[band].bar} transition-[width] duration-500`} style={{ width: `${score}%` }} />
+        {/* Striped zone = the range this wallet type can never reach. */}
+        {showCap && (
+          <div
+            className="absolute inset-y-0 right-0"
+            style={{
+              width: `${cappedPct}%`,
+              backgroundImage:
+                'repeating-linear-gradient(45deg, var(--border) 0, var(--border) 2px, transparent 2px, transparent 5px)',
+            }}
+          />
+        )}
+      </div>
+      {showCap && (
+        <div
+          role="tooltip"
+          className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-64 max-w-[80vw] -translate-x-1/2 rounded-lg border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--text-muted)] opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+        >
+          <span className="font-medium text-[var(--foreground)]">Capped at {ceiling} by wallet type.</span>{' '}
+          {typeNote}
+        </div>
+      )}
     </div>
   );
 }
@@ -236,7 +275,7 @@ export function RiskResult() {
                 </div>
               </div>
               <div className="mt-3">
-                <ScoreBar score={wr.score} band={wr.band} />
+                <ScoreBar score={wr.score} band={wr.band} ceiling={wr.ceiling} typeNote={TYPE_NOTE[wr.type]} />
               </div>
               {wr.issues.length > 0 ? (
                 <ul className="mt-4 space-y-2">
@@ -258,9 +297,6 @@ export function RiskResult() {
               ) : (
                 <p className="mt-4 text-sm text-green-500">Nothing to flag in how you use it.</p>
               )}
-              {/* Explains the score's inherent-risk floor so a capped number
-                  (e.g. a clean wallet at 64) doesn't look unexplained. */}
-              <p className="mt-3 text-xs text-[var(--text-muted)]">{TYPE_NOTE[wr.type]}</p>
             </div>
           ))}
         </div>
