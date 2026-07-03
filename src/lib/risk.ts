@@ -60,10 +60,12 @@ export function securityBand(score: number): SecurityBand {
 }
 
 // Inherent risk floor from a wallet's type and configuration, before hygiene.
+// Capped at 30 so a wallet with no flagged issues never scores below 70 — the
+// baseline reflects wallet type, but a clean setup should still read as decent.
 function architectureRisk(w: WalletEntry): number {
   switch (w.type) {
     case 'browser_extension':
-      return 38;
+      return 30;
     case 'mobile':
       return 26;
     case 'exchange':
@@ -74,7 +76,7 @@ function architectureRisk(w: WalletEntry): number {
       const m = w.msigThreshold ?? 2;
       const n = w.msigSigners ?? 2;
       const hw = w.msigHardwareCount ?? 0;
-      if (m < 2) return 40; // 1-of-n is effectively a single key
+      if (m < 2) return 30; // 1-of-n is effectively a single key
       const softwareCount = n - hw;
       // If software keys alone can't reach threshold, an attacker needs a
       // hardware key — much harder.
@@ -82,10 +84,10 @@ function architectureRisk(w: WalletEntry): number {
       const axes = (w.msigSeparation ?? []).filter((s) => s !== 'together').length;
       b -= axes * 5; // each independent separation axis lowers correlated-compromise risk
       if (axes === 0) b += 6;
-      return clamp(b, 4, 45);
+      return clamp(b, 4, 30);
     }
     default:
-      return 36;
+      return 30;
   }
 }
 

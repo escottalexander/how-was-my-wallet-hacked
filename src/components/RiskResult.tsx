@@ -23,7 +23,7 @@ const BAND: Record<SecurityBand, { label: string; color: string; bar: string }> 
 // keeps a capped score from looking unexplained next to "nothing to flag".
 const TYPE_NOTE: Record<PortfolioWalletType, string> = {
   browser_extension:
-    'Browser-extension wallets stay connected to the internet, so they carry built-in exposure — even flawless habits top out around 62.',
+    'Browser-extension wallets stay connected to the internet, so they carry built-in exposure — even flawless habits top out around 70.',
   mobile:
     'Mobile wallets are online and live on an everyday device, so they start with some built-in risk — a well-kept one tops out around 74.',
   hardware:
@@ -33,7 +33,7 @@ const TYPE_NOTE: Record<PortfolioWalletType, string> = {
   exchange:
     'On a custodial account the exchange holds the keys, so the score leans on their controls and your login — it tops out around 74.',
   other:
-    'You chose “Other,” so we can’t assess the setup and apply a moderate baseline (caps at 64). Pick a specific wallet type for a sharper score.',
+    'You chose “Other,” so we can’t assess the setup and apply a moderate baseline (caps at 70). Pick a specific wallet type for a sharper score.',
 };
 
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);

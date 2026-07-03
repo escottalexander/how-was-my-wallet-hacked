@@ -664,7 +664,7 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       'Be extremely skeptical of any "opportunity"',
       'Verify sites independently before connecting your wallet',
       'Use a separate "hot wallet" with small amounts for risky activities',
-      'Consider hardware wallets for significant holdings',
+      'Consider a multisig protected by multiple signers for large holdings',
     ],
     externalLinks: [
       { label: 'Revoke token approvals', url: 'https://revoke.cash' },
