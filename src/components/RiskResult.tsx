@@ -56,7 +56,11 @@ export function RiskResult() {
   const [shareOpen, setShareOpen] = useState(false);
   const recordedRef = useRef(false);
 
+  // Read client-only sessionStorage after mount to stay hydration-safe; the
+  // `ready` flag drives the loading state until then. This is a legitimate
+  // external-store read, so the set-state-in-effect rule is a false positive.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setData(readRisk());
     setReady(true);
   }, []);
