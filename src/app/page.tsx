@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   // Home uses the brand name as its title (no template suffix) and targets the core query.
   title: {
-    absolute: "How Was My Wallet Hacked? Find Out How Your Crypto Was Compromised",
+    absolute: "How was my wallet hacked? Find out how your crypto was compromised",
   },
   description:
     "Hacked or drained? Answer a few questions to understand how your crypto wallet was most likely compromised, and the steps to protect yourself going forward.",

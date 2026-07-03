@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 export function BrandWordmark() {
   const pathname = usePathname();
   const isRisk = pathname?.startsWith('/how-secure-is-my-wallet') || pathname?.startsWith('/r/');
-  const label = isRisk ? 'How secure is my wallet?' : 'How Was My Wallet Hacked?';
+  const label = isRisk ? 'How secure is my wallet?' : 'How was my wallet hacked?';
   const href = isRisk ? '/how-secure-is-my-wallet' : '/';
 
   return (

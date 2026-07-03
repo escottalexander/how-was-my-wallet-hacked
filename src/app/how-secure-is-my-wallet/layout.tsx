@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/site";
 
-const TITLE = "How Secure Is My Wallet? Crypto Wallet Security Score";
+const TITLE = "How secure is my wallet? Crypto wallet security score";
 const DESCRIPTION =
   "Get your crypto wallet security score and find out exactly where you're exposed.";
 
 export const metadata: Metadata = {
-  // `absolute` drops the "· How Was My Wallet Hacked?" template suffix so the
+  // `absolute` drops the "· How was my wallet hacked?" template suffix so the
   // composed title stays short enough to avoid SERP truncation (~52 chars).
   title: { absolute: TITLE },
   description:

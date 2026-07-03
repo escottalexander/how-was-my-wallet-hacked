@@ -4,7 +4,7 @@ import { SITE_URL, SITE_NAME } from "@/lib/site";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Who's behind How Was My Wallet Hacked?, how the diagnostic works, and our privacy stance: no wallet connection and no personal data.",
+    "Who's behind How was my wallet hacked?, how the diagnostic works, and our privacy stance: no wallet connection and no personal data.",
   alternates: { canonical: "/about" },
 };
 
