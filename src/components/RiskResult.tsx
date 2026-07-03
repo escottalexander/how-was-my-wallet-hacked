@@ -26,15 +26,17 @@ const issueText = (reason: string): string => {
 };
 
 interface StoredRisk {
-  pathAttemptId: string;
+  pathAttemptId: string | null;
   assessment: RiskAssessment;
 }
 
 function readRisk(): StoredRisk | null {
   if (typeof window === 'undefined') return null;
+  // pathAttemptId is analytics-only and may be absent if the DB was offline
+  // during the flow — the score comes entirely from the stored answers.
   const pathAttemptId = sessionStorage.getItem(`${STORAGE_KEY}_path_attempt_id`);
   const answersRaw = sessionStorage.getItem(`${STORAGE_KEY}_answers`);
-  if (!pathAttemptId || !answersRaw) return null;
+  if (!answersRaw) return null;
   let answers: AnswerMap = {};
   try { answers = JSON.parse(answersRaw); } catch { return null; }
   return { pathAttemptId, assessment: assessRisk(answers) };
@@ -68,6 +70,8 @@ export function RiskResult() {
   useEffect(() => {
     if (!data || recordedRef.current) return;
     recordedRef.current = true;
+    // No path attempt (DB was offline) → nothing to record; the result still shows.
+    if (!data.pathAttemptId) return;
     fetch('/api/diagnosis', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

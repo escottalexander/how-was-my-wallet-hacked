@@ -21,7 +21,7 @@ const STORAGE_KEY = 'howwasihacked';
  */
 export function DiagnosticFlow() {
   const router = useRouter();
-  const { sessionId, isLoading, error } = useSession();
+  const { sessionId, isLoading } = useSession();
   const [pathAttemptId, setPathAttemptId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const createdAttemptRef = useRef(false);
@@ -76,7 +76,7 @@ export function DiagnosticFlow() {
   };
 
   const handleComplete = async (answers: AnswerMap) => {
-    if (!pathAttemptId || isSubmitting) return;
+    if (isSubmitting) return;
     setIsSubmitting(true);
 
     const walletType = answers.wallet_type as WalletType | undefined;
@@ -103,27 +103,25 @@ export function DiagnosticFlow() {
       sessionStorage.removeItem(`${STORAGE_KEY}_diagnosis_context`);
     }
 
-    await fetch('/api/path', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pathAttemptId, complete: true }),
-    }).catch(() => {});
+    // Analytics only — skip if we never got a path attempt (e.g. DB offline).
+    if (pathAttemptId) {
+      await fetch('/api/path', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pathAttemptId, complete: true }),
+      }).catch(() => {});
+    }
 
     router.push('/diagnostic/diagnosis');
   };
 
-  if (isLoading || (!pathAttemptId && !error)) {
+  // Only wait for the session provider to settle; the flow itself works even if
+  // session/path tracking failed (analytics is best-effort, the diagnosis is
+  // computed client-side). `error` is intentionally not treated as fatal.
+  if (isLoading) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center">
         <div className="text-[var(--text-muted)]">Loading...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-        <p className="text-red-500">Something went wrong. Please refresh the page.</p>
       </div>
     );
   }

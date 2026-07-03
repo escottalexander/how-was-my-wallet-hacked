@@ -15,7 +15,8 @@ import type { AnswerMap } from '@/lib/questions';
 import type { WalletType } from '@/lib/types';
 
 interface StoredDiagnosisState {
-  pathAttemptId: string;
+  // Analytics-only; absent if the DB was offline during the flow.
+  pathAttemptId: string | null;
   diagnosisType: DiagnosisType;
   context: { howFound?: string; whatDoing?: string } | null;
   answers: AnswerMap;
@@ -40,7 +41,7 @@ function useStoredDiagnosisState(): StoredDiagnosisState | null {
     const raw = `${pathAttemptId ?? ''}::${diagnosisType ?? ''}::${context ?? ''}::${answersRaw ?? ''}`;
     if (cacheRef.current?.raw === raw) return cacheRef.current.value;
 
-    if (!pathAttemptId || !diagnosisType) {
+    if (!diagnosisType) {
       cacheRef.current = { raw, value: null };
       return null;
     }
@@ -72,7 +73,7 @@ function useStoredDiagnosisState(): StoredDiagnosisState | null {
 
 export default function DiagnosisPage() {
   const router = useRouter();
-  const { isLoading, error } = useSession();
+  const { isLoading } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [diagnosisId, setDiagnosisId] = useState<string | null>(null);
   // Track rejected diagnoses for client-side re-scoring
@@ -91,10 +92,11 @@ export default function DiagnosisPage() {
     setCurrentContext(storedState.context);
   }, [storedState]);
 
-  // Create the initial diagnosis record
+  // Create the initial diagnosis record (analytics only)
   useEffect(() => {
     if (!currentDiagnosis || !storedState || diagnosisCreatedRef.current) return;
     diagnosisCreatedRef.current = true;
+    if (!storedState.pathAttemptId) return; // DB offline — nothing to record
 
     fetch('/api/diagnosis', {
       method: 'POST',
@@ -110,37 +112,37 @@ export default function DiagnosisPage() {
   }, [currentDiagnosis, storedState]);
 
   const handleAccept = async () => {
-    if (!diagnosisId) return;
     setIsSubmitting(true);
-    try {
+    // Record acceptance if we have a diagnosis record; otherwise proceed anyway.
+    if (diagnosisId) {
       await fetch('/api/diagnosis', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ diagnosisId, accepted: true }),
-      });
-      // Clear session state
-      ['howwasihacked_path_attempt_id', 'howwasihacked_diagnosis_type',
-       'howwasihacked_diagnosis_context', 'howwasihacked_answers'].forEach((k) =>
-        sessionStorage.removeItem(k)
-      );
-      router.push('/learn');
-    } catch (err) {
-      console.error('Error accepting diagnosis:', err);
-      setIsSubmitting(false);
+      }).catch(() => {});
     }
+    // Clear session state
+    ['howwasihacked_path_attempt_id', 'howwasihacked_diagnosis_type',
+     'howwasihacked_diagnosis_context', 'howwasihacked_answers'].forEach((k) =>
+      sessionStorage.removeItem(k)
+    );
+    router.push('/learn');
   };
 
   const handleReject = async () => {
-    if (!diagnosisId || !storedState || !currentDiagnosis) return;
+    // Re-scoring is fully client-side; only the tracking PATCH needs an id.
+    if (!storedState || !currentDiagnosis) return;
     setIsSubmitting(true);
 
     try {
-      // Mark current diagnosis rejected
-      await fetch('/api/diagnosis', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ diagnosisId, accepted: false }),
-      });
+      // Mark current diagnosis rejected (analytics only)
+      if (diagnosisId) {
+        await fetch('/api/diagnosis', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ diagnosisId, accepted: false }),
+        }).catch(() => {});
+      }
 
       const newRejected = [...rejectedDiagnoses, currentDiagnosis];
       setRejectedDiagnoses(newRejected);
@@ -183,6 +185,7 @@ export default function DiagnosisPage() {
   useEffect(() => {
     if (!currentDiagnosis || !storedState || diagnosisCreatedRef.current) return;
     diagnosisCreatedRef.current = true;
+    if (!storedState.pathAttemptId) return; // DB offline — nothing to record
 
     fetch('/api/diagnosis', {
       method: 'POST',
@@ -219,14 +222,6 @@ export default function DiagnosisPage() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center">
         <div className="text-[var(--text-muted)]">Loading...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-        <p className="text-red-500">Something went wrong. Please refresh the page.</p>
       </div>
     );
   }

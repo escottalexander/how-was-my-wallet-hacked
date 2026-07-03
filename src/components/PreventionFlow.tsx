@@ -21,7 +21,7 @@ const STORAGE_KEY = 'hwih_prevention';
  */
 export function PreventionFlow() {
   const router = useRouter();
-  const { sessionId, isLoading, error } = useSession();
+  const { sessionId, isLoading } = useSession();
   const [pathAttemptId, setPathAttemptId] = useState<string | null>(null);
   const [portfolio, setPortfolio] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,31 +64,29 @@ export function PreventionFlow() {
   };
 
   const handleComplete = async (answers: AnswerMap) => {
-    if (!pathAttemptId || isSubmitting) return;
+    if (isSubmitting) return;
     setIsSubmitting(true);
     const top = assessRisk(answers).topVector;
     sessionStorage.setItem(`${STORAGE_KEY}_diagnosis_type`, top);
     sessionStorage.setItem(`${STORAGE_KEY}_answers`, JSON.stringify(answers));
-    await fetch('/api/path', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pathAttemptId, complete: true }),
-    }).catch(() => {});
+    // Analytics only — skip if we never got a path attempt (e.g. DB offline).
+    if (pathAttemptId) {
+      await fetch('/api/path', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pathAttemptId, complete: true }),
+      }).catch(() => {});
+    }
     router.push('/how-secure-is-my-wallet/result');
   };
 
-  if (isLoading || (!pathAttemptId && !error)) {
+  // Only wait for the session provider to settle; the flow itself works even if
+  // session/path tracking failed (analytics is best-effort, the score is
+  // computed client-side). Session errors are intentionally not fatal.
+  if (isLoading) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center">
         <div className="text-[var(--text-muted)]">Loading...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-        <p className="text-red-500">Something went wrong. Please refresh the page.</p>
       </div>
     );
   }
