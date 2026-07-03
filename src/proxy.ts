@@ -3,7 +3,7 @@ import { SITE_URL } from "@/lib/site";
 
 // Permanently redirect the *.workers.dev origin to the canonical custom domain
 // so there's a single indexable home for the site (no duplicate content).
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const host = req.headers.get("host") ?? "";
   if (host.endsWith(".workers.dev")) {
     const dest = new URL(

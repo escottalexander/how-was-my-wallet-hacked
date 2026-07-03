@@ -7,10 +7,11 @@ export const contentType = 'image/png';
 export const dynamic = 'force-dynamic';
 
 function band(score: number): { label: string; color: string } {
-  if (score >= 76) return { label: 'Strong', color: '#34d399' };
-  if (score >= 56) return { label: 'Good', color: '#6ee7b7' };
-  if (score >= 31) return { label: 'Fair', color: '#fbbf24' };
-  return { label: 'Weak', color: '#f87171' };
+  // Colors tuned to read on the warm "field guide" paper background.
+  if (score >= 76) return { label: 'strong', color: '#1f6a57' }; // evergreen
+  if (score >= 56) return { label: 'good', color: '#3f8f6f' };
+  if (score >= 31) return { label: 'fair', color: '#c4673a' }; // terracotta
+  return { label: 'weak', color: '#b3402f' }; // deep rust-red
 }
 
 export default async function Image({ params }: { params: Promise<{ score: string }> }) {
@@ -28,36 +29,41 @@ export default async function Image({ params }: { params: Promise<{ score: strin
           flexDirection: 'column',
           justifyContent: 'space-between',
           padding: '72px 80px',
-          background: 'linear-gradient(135deg, #143d30 0%, #1f6a57 100%)',
-          color: '#f3efe5',
+          background: 'linear-gradient(140deg, #f6f2e9 0%, #efe7d6 55%, #e8dfcc 100%)',
+          color: '#221f19',
           fontFamily: 'sans-serif',
         }}
       >
-        <div style={{ display: 'flex', fontSize: 30, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(243,239,229,0.7)' }}>
-          Crypto wallet security check
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 64 }}>
+        {/* Main row: the score on the left, the personal claim on the right. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 64, flex: 1 }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'flex-end', color: b.color }}>
-              <span style={{ fontSize: 220, fontWeight: 800, lineHeight: 1 }}>{score}</span>
-              <span style={{ fontSize: 80, fontWeight: 700, opacity: 0.6, paddingBottom: 24 }}>/100</span>
+              <span style={{ fontSize: 220, fontWeight: 600, lineHeight: 1, letterSpacing: -6 }}>{score}</span>
+              <span style={{ fontSize: 80, fontWeight: 400, opacity: 0.55, paddingBottom: 24 }}>/100</span>
             </div>
-            <div style={{ display: 'flex', fontSize: 40, fontWeight: 700, color: b.color }}>{b.label}</div>
+            <div style={{ display: 'flex', fontSize: 34, fontWeight: 500, color: b.color, letterSpacing: -0.5, textTransform: 'capitalize' }}>
+              {b.label}
+            </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-            <div style={{ display: 'flex', fontSize: 68, fontWeight: 800, lineHeight: 1.05 }}>
-              Find out how hackable you are
+            <div style={{ display: 'flex', flexWrap: 'wrap', fontSize: 62, fontWeight: 600, lineHeight: 1.08, letterSpacing: -1.5 }}>
+              I scored {score}/100 on wallet security.
             </div>
-            <div style={{ display: 'flex', fontSize: 32, marginTop: 16, color: 'rgba(243,239,229,0.8)' }}>
-              A free 2-minute wallet security score.
+            <div style={{ display: 'flex', fontSize: 32, fontWeight: 400, marginTop: 20, color: '#6f6a5d', letterSpacing: -0.3 }}>
+              See if your security practices are good enough.
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', fontSize: 32, fontWeight: 600, color: 'rgba(243,239,229,0.85)' }}>
-          howwasmywallethacked.com/how-hackable-are-you
+        {/* Footer: the CTA sits just above the link. */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', fontSize: 40, fontWeight: 600, color: '#221f19', letterSpacing: -0.6 }}>
+            Find out how hackable you are →
+          </div>
+          <div style={{ display: 'flex', fontSize: 28, fontWeight: 400, marginTop: 10, color: '#6f6a5d' }}>
+            howwasmywallethacked.com/how-hackable-are-you
+          </div>
         </div>
       </div>
     ),

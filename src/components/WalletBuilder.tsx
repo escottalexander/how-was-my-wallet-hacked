@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Question } from '@/lib/questions';
 import {
   WALLET_TYPE_OPTIONS,
@@ -300,7 +300,11 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
   );
 
   const content = step === 'type' ? startScreen : subStep;
-  bodyRef.current = content;
+  // Snapshot the current body after each render so `go()` can animate it out.
+  // (go/back only fire from user events, after the effect has committed.)
+  useEffect(() => {
+    bodyRef.current = content;
+  });
 
   const enterAnim = dir === 'back' ? 'animate-slideInLeft' : 'animate-slideInRight';
   const exitAnim = exiting?.dir === 'back' ? 'animate-slideOutRight' : 'animate-slideOutLeft';

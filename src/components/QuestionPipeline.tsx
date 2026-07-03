@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { QUESTIONS, filterVisible, type AnswerMap, type Question } from '@/lib/questions';
 import { ProgressBar } from '@/components/ProgressBar';
 import { WalletBuilder } from '@/components/WalletBuilder';
@@ -202,17 +202,22 @@ function DateQuestion({
   onContinue: (value: string) => void;
   disabled?: boolean;
 }) {
-  const [year, setYear] = useState('');
-  const [quarter, setQuarter] = useState('');
+  const parseDate = (v: string): [string, string] =>
+    v && v !== 'unknown' ? [v.split('-')[0] ?? '', v.split('-')[1] ?? ''] : ['', ''];
 
-  // Sync from external value (e.g., "2022-Q3")
-  useEffect(() => {
+  const [year, setYear] = useState(() => parseDate(value)[0]);
+  const [quarter, setQuarter] = useState(() => parseDate(value)[1]);
+
+  // Sync from external value (e.g., "2022-Q3") when it changes, without an effect.
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     if (value && value !== 'unknown') {
-      const [y, q] = value.split('-');
-      setYear(y ?? '');
-      setQuarter(q ?? '');
+      const [y, q] = parseDate(value);
+      setYear(y);
+      setQuarter(q);
     }
-  }, [value]);
+  }
 
   const handleContinue = () => {
     onContinue(year && quarter ? `${year}-${quarter}` : 'unknown');
@@ -322,20 +327,17 @@ function TextQuestion({
 
 export function QuestionPipeline({ onAnswer, onComplete, initialAnswers, questions = QUESTIONS }: QuestionPipelineProps) {
   const [answers, setAnswers] = useState<AnswerMap>(initialAnswers ?? {});
-  // Stack of question IDs the user has visited, in order
-  const [historyIds, setHistoryIds] = useState<string[]>([]);
+  // Stack of question IDs the user has visited, in order.
+  // Seeded with the first visible question so no mount effect is needed.
+  const [historyIds, setHistoryIds] = useState<string[]>(() => {
+    const vis = filterVisible(questions, initialAnswers ?? {});
+    return vis.length > 0 ? [vis[0].id] : [];
+  });
   // Pending value for multi/date/text questions (not yet submitted)
   const [pendingMulti, setPendingMulti] = useState<string[]>([]);
   const [pendingText, setPendingText] = useState<string>('');
 
   const visibleQuestions = useMemo(() => filterVisible(questions, answers), [answers, questions]);
-
-  // Initialize history with the first visible question on mount
-  useEffect(() => {
-    if (historyIds.length === 0 && visibleQuestions.length > 0) {
-      setHistoryIds([visibleQuestions[0].id]);
-    }
-  }, [visibleQuestions, historyIds.length]);
 
   const currentId = historyIds[historyIds.length - 1] ?? null;
   const currentQuestion = currentId ? questions.find((q) => q.id === currentId) ?? null : null;
@@ -344,22 +346,21 @@ export function QuestionPipeline({ onAnswer, onComplete, initialAnswers, questio
     ? currentVisibleIndex / (visibleQuestions.length - 1)
     : 0;
 
-  // Reset pending state when question changes
-  useEffect(() => {
-    if (!currentQuestion) return;
-    if (currentQuestion.type === 'multi') {
-      const existing = answers[currentQuestion.id];
-      if (Array.isArray(existing)) {
-        setPendingMulti(existing);
-      } else {
-        setPendingMulti([]);
+  // Reset pending state when the question changes, during render (no effect).
+  const [prevId, setPrevId] = useState<string | null>(currentId);
+  if (currentId !== prevId) {
+    setPrevId(currentId);
+    if (currentQuestion) {
+      if (currentQuestion.type === 'multi') {
+        const existing = answers[currentQuestion.id];
+        setPendingMulti(Array.isArray(existing) ? existing : []);
+      }
+      if (currentQuestion.type === 'text') {
+        const existing = answers[currentQuestion.id];
+        setPendingText(typeof existing === 'string' ? existing : '');
       }
     }
-    if (currentQuestion.type === 'text') {
-      const existing = answers[currentQuestion.id];
-      setPendingText(typeof existing === 'string' ? existing : '');
-    }
-  }, [currentId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }
 
   const advance = (newAnswers: AnswerMap, answeredId: string, answer: string | string[]) => {
     onAnswer?.(answeredId, answer);
