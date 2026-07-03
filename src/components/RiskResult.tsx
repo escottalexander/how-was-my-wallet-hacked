@@ -113,6 +113,19 @@ export function RiskResult() {
   const [diagnosisId, setDiagnosisId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  // Whether this browser can share an actual image file (mobile share sheets can).
+  const [canShareImage] = useState(() => {
+    try {
+      return (
+        typeof navigator !== 'undefined' &&
+        !!navigator.canShare &&
+        navigator.canShare({ files: [new File([new Uint8Array()], 'probe.png', { type: 'image/png' })] })
+      );
+    } catch {
+      return false;
+    }
+  });
   const recordedRef = useRef(false);
 
   // Read client-only sessionStorage after mount to stay hydration-safe; the
@@ -179,7 +192,7 @@ export function RiskResult() {
   const shareUrl = `${SITE_URL}/r/${overallScore}`;
   const shareText = `My crypto wallet security score: ${overallScore}/100 🔐 Can you beat it?`;
   const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
-  const fcUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`;
+  const fcUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
   const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
 
   const copyLink = async () => {
@@ -189,10 +202,49 @@ export function RiskResult() {
       setTimeout(() => setCopied(false), 2000);
     } catch { /* ignore */ }
   };
-  const nativeShare = () => {
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      navigator.share({ title: 'My wallet security score', text: shareText, url: shareUrl }).catch(() => {});
+  // Fetch the per-score OG card as a real PNG File (cached after first fetch).
+  const getImageFile = async (): Promise<File | null> => {
+    if (imageFile) return imageFile;
+    try {
+      const res = await fetch(`/r/${overallScore}/opengraph-image`);
+      if (!res.ok) return null;
+      const blob = await res.blob();
+      const file = new File([blob], `wallet-security-score-${overallScore}.png`, { type: 'image/png' });
+      setImageFile(file);
+      return file;
+    } catch {
+      return null;
     }
+  };
+  // Share the actual image via the native sheet — mobile targets (X, Instagram,
+  // etc.) attach it as media, so it posts as an image, not just a link.
+  const shareImage = async () => {
+    setShareOpen(false);
+    const file = imageFile ?? (await getImageFile());
+    const base = { title: 'My wallet security score', text: shareText, url: shareUrl };
+    try {
+      if (file && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ ...base, files: [file] });
+      } else if (navigator.share) {
+        await navigator.share(base);
+      }
+    } catch {
+      /* user cancelled */
+    }
+  };
+  // Save the image so it can be attached manually (desktop, or apps without a
+  // share target).
+  const downloadImage = async () => {
+    const file = imageFile ?? (await getImageFile());
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
     setShareOpen(false);
   };
   const menuItem = 'block w-full rounded-lg px-3 py-2 text-left text-sm text-[var(--foreground)] transition-colors hover:bg-[var(--primary)]/10';
@@ -218,7 +270,11 @@ export function RiskResult() {
         <div className="relative mt-5 flex justify-center">
           <button
             type="button"
-            onClick={() => setShareOpen((o) => !o)}
+            onClick={() => {
+              const opening = !shareOpen;
+              setShareOpen(opening);
+              if (opening) void getImageFile(); // warm the image so sharing is instant
+            }}
             className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition-colors hover:border-[var(--primary)]"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -234,20 +290,25 @@ export function RiskResult() {
             <>
               <button type="button" aria-label="Close" onClick={() => setShareOpen(false)} className="fixed inset-0 z-10 cursor-default" />
               <div className="absolute top-full left-1/2 z-20 mt-2 w-52 -translate-x-1/2 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-1.5 text-left shadow-lg">
+                {canShareImage && (
+                  <button type="button" onClick={shareImage} className={`${menuItem} font-medium text-[var(--primary)]`}>
+                    Share image…
+                  </button>
+                )}
+                <button type="button" onClick={downloadImage} className={menuItem}>
+                  Save image
+                </button>
                 <a href={xUrl} target="_blank" rel="noopener noreferrer" onClick={() => { trackClick('clickedLearn'); setShareOpen(false); }} className={menuItem}>
                   Share on X
                 </a>
-                <button type="button" onClick={copyLink} className={menuItem}>
-                  {copied ? 'Link copied!' : 'Copy link'}
-                </button>
                 <a href={fcUrl} target="_blank" rel="noopener noreferrer" onClick={() => setShareOpen(false)} className={menuItem}>
                   Farcaster
                 </a>
                 <a href={tgUrl} target="_blank" rel="noopener noreferrer" onClick={() => setShareOpen(false)} className={menuItem}>
                   Telegram
                 </a>
-                <button type="button" onClick={nativeShare} className={`${menuItem} sm:hidden`}>
-                  More options…
+                <button type="button" onClick={copyLink} className={menuItem}>
+                  {copied ? 'Link copied!' : 'Copy link'}
                 </button>
               </div>
             </>
