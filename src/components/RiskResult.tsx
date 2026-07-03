@@ -114,9 +114,9 @@ export function RiskResult() {
   const hasWeakSpots = wallets.some((w) => w.issues.length > 0);
 
   // The shared link is the per-score OG route — its preview image carries the
-  // score and "find out how hackable you are", with no balances or wallet data.
+  // score and "can you beat my score?", with no balances or wallet data.
   const shareUrl = `${SITE_URL}/r/${overallScore}`;
-  const shareText = `My crypto wallet security score: ${overallScore}/100 🔐 Find out how hackable you are:`;
+  const shareText = `My crypto wallet security score: ${overallScore}/100 🔐 Can you beat it?`;
   const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
   const fcUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`;
   const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;

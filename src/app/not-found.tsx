@@ -30,7 +30,7 @@ export default function NotFound() {
           href="/how-hackable-are-you"
           className="inline-flex h-11 items-center justify-center rounded-full border-2 border-[var(--border)] px-6 font-medium text-[var(--foreground)] transition-colors hover:border-[var(--primary)]"
         >
-          How hackable are you?
+          How secure is my wallet?
         </Link>
       </div>
     </div>

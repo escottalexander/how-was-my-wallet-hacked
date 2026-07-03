@@ -108,6 +108,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Open Graph logo. Emitted manually because Next's typed metadata
+            renders custom tags with name=, but OG requires property=. */}
+        <meta property="og:logo" content={`${SITE_URL}/apple-icon.png`} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -150,7 +153,7 @@ export default function RootLayout({
               href="/how-hackable-are-you"
               className="hover:text-[var(--primary)] transition-colors"
             >
-              How hackable are you?
+              How secure is my wallet?
             </Link>
             <a
               href="https://github.com/escottalexander"

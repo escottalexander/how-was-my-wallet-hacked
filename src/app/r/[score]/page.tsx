@@ -16,8 +16,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { score } = await params;
   const s = clampScore(score);
-  const title = "Find out how hackable you are";
-  const description = `Someone scored ${s}/100 on their crypto wallet security check. How hackable are you?`;
+  const title = "Can you beat this wallet security score?";
+  const description = `Someone scored ${s}/100 on their crypto wallet security check. How secure is your wallet? See if you can beat it.`;
   return {
     title,
     description,
@@ -49,7 +49,7 @@ export default async function ShareLanding({
           Someone just scored {s}/100
         </p>
         <h1 className="text-4xl font-semibold tracking-tight text-[var(--foreground)] sm:text-5xl">
-          How hackable are you?
+          Can you beat this score?
         </h1>
         <p className="text-lg text-[var(--text-muted)] leading-relaxed">
           Map your wallets, answer a few quick questions, and get a security score with the exact

@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-export const alt = 'Find out how hackable you are';
+export const alt = 'Can you beat my wallet security score?';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 // Generated on demand per request (proven to work at runtime on Cloudflare).
@@ -46,22 +46,20 @@ export default async function Image({ params }: { params: Promise<{ score: strin
             </div>
           </div>
 
+          {/* Kept a step smaller than the score so the eye lands left first. */}
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', fontSize: 62, fontWeight: 600, lineHeight: 1.08, letterSpacing: -1.5 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', fontSize: 52, fontWeight: 600, lineHeight: 1.1, letterSpacing: -1.2 }}>
               I scored {score}/100 on wallet security.
-            </div>
-            <div style={{ display: 'flex', fontSize: 32, fontWeight: 400, marginTop: 20, color: '#6f6a5d', letterSpacing: -0.3 }}>
-              See if your security practices are good enough.
             </div>
           </div>
         </div>
 
-        {/* Footer: the CTA sits just above the link. */}
+        {/* Footer: the challenge CTA leads, the link sits quietly beneath it. */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', fontSize: 40, fontWeight: 600, color: '#221f19', letterSpacing: -0.6 }}>
-            Find out how hackable you are →
+          <div style={{ display: 'flex', fontSize: 52, fontWeight: 700, color: '#1f6a57', letterSpacing: -0.8 }}>
+            Can you beat my score? →
           </div>
-          <div style={{ display: 'flex', fontSize: 28, fontWeight: 400, marginTop: 10, color: '#6f6a5d' }}>
+          <div style={{ display: 'flex', fontSize: 27, fontWeight: 400, marginTop: 14, color: '#6f6a5d' }}>
             howwasmywallethacked.com/how-hackable-are-you
           </div>
         </div>

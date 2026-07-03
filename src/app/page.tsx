@@ -42,7 +42,7 @@ export default function Home() {
         <p className="text-sm text-[var(--text-muted)]">
           Haven&apos;t been hacked yet?{" "}
           <Link href="/how-hackable-are-you" className="text-[var(--primary)] hover:underline">
-            Find out how hackable you are →
+            See how secure your wallet is →
           </Link>
         </p>
       </div>
