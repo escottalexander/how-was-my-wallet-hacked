@@ -22,8 +22,10 @@ export async function generateMetadata({
     title,
     description,
     // The score-specific landing isn't worth indexing; crawlers still read OG.
+    // No canonical to /how-secure-is-my-wallet: social crawlers (e.g. Telegram)
+    // follow rel=canonical and would then show the tool page's OG image instead
+    // of this per-score card. noindex already keeps these pages out of the index.
     robots: { index: false, follow: true },
-    alternates: { canonical: "/how-secure-is-my-wallet" },
     openGraph: {
       type: "website",
       title,
