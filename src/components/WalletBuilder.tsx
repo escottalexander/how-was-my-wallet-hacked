@@ -184,7 +184,7 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
           Your wallets · {wallets.length}
         </h2>
         <p className="mx-auto mt-2 max-w-md text-[var(--text-muted)]">
-          Add each place you keep crypto for a full picture — or see your score whenever you&apos;re ready.
+          Add each place you keep crypto for a full picture. Next, a few quick questions about how you use them.
         </p>
       </div>
       <ul className="space-y-2">
@@ -217,7 +217,7 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
           onClick={() => onContinue(JSON.stringify(wallets))}
           className="w-full rounded-xl bg-[var(--primary)] px-6 py-4 text-lg font-medium text-white transition-colors duration-200 hover:bg-[var(--primary-hover)]"
         >
-          See my score →
+          Continue →
         </button>
       </div>
     </div>
