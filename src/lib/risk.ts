@@ -221,18 +221,37 @@ function scoreWallet(
 
   // ---- Per-wallet usage + signing care (asked for wallets you sign with) ----
   if (w.type !== 'exchange') {
+    // Usage is an activity level, not a fault on its own — transacting is the
+    // point of a wallet. It acts as a force multiplier on the real risk: signing
+    // a transaction you didn't check. "Hold" barely signs; airdrops and new
+    // dApps sign the most, on the riskiest surfaces.
     const usage = answers[wk(i, 'usage')];
-    if (usage === 'mint_airdrops') {
-      add(8, 'malicious_transaction', `${L}: used for minting and airdrops`);
-      add(3, 'phishing_fake_site', `${L}: airdrop hunting draws fake sites`);
-    } else if (usage === 'try_new_experimental') add(8, 'malicious_transaction', `${L}: used with new, unaudited dApps`);
-    else if (usage === 'defi_yield') add(4, 'malicious_transaction', `${L}: frequent DeFi token approvals`);
-    else if (usage === 'swap_transfer') add(2, 'malicious_transaction', `${L}: regular swaps and transfers`);
+    const activity =
+      usage === 'hold' ? 0.3
+      : usage === 'defi_yield' ? 1.3
+      : usage === 'try_new_experimental' || usage === 'mint_airdrops' ? 1.5
+      : 1; // swap_transfer / regular use
+    const heavyUse = usage !== undefined && usage !== 'hold';
 
     const care = answers[wk(i, 'signing_care')];
-    if (care === 'often_blind') add(12, 'malicious_transaction', `${L}: you often blind-sign with it`);
-    else if (care === 'sometimes_confirm') add(7, 'malicious_transaction', `${L}: you sometimes approve without checking`);
-    else if (care === 'always_verify') strengths.add('You carefully verify what you sign');
+    if (care === 'often_blind') {
+      add(Math.round(12 * activity), 'malicious_transaction',
+        heavyUse
+          ? `${L}: you use this wallet a lot but often sign transactions without checking them`
+          : `${L}: you often blind-sign with it`);
+    } else if (care === 'sometimes_confirm') {
+      add(Math.round(7 * activity), 'malicious_transaction',
+        heavyUse
+          ? `${L}: you use this wallet a lot but don't always check the transaction thoroughly`
+          : `${L}: you sometimes approve without checking`);
+    } else if (care === 'always_verify') {
+      strengths.add('You carefully verify what you sign');
+    }
+
+    // Riskier usage carries some surface risk even when you do check carefully
+    // (fake sites, unaudited contracts) — small, and independent of signing care.
+    if (usage === 'mint_airdrops') add(3, 'phishing_fake_site', `${L}: airdrop hunting draws fake sites`);
+    else if (usage === 'try_new_experimental') add(4, 'malicious_transaction', `${L}: interacts with new, unaudited dApps`);
 
     // Browsing + approval hygiene remain person-level habits, applied to signing wallets.
     const sf = signFactor(w.type);
