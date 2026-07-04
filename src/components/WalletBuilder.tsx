@@ -71,6 +71,9 @@ interface WalletBuilderProps {
 
 export function WalletBuilder({ question, value, onContinue }: WalletBuilderProps) {
   const [wallets, setWallets] = useState<WalletEntry[]>(() => parseWallets(value));
+  // Once a wallet exists, we land on the portfolio review; `adding` is true only
+  // while the user has chosen to add another (so the type picker is shown).
+  const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<Partial<WalletEntry>>({});
   const [stepIndex, setStepIndex] = useState(0);
   const [dir, setDir] = useState<'fwd' | 'back'>('fwd');
@@ -107,6 +110,7 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
         setWallets((prev) => [...prev, { ...d, id: crypto.randomUUID() }]);
         setDraft({});
         setStepIndex(0);
+        setAdding(false); // return to the portfolio review, now one wallet larger
       }
     } else {
       setStepIndex(stepIndex + 1);
@@ -127,57 +131,99 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
   const back = () => go(() => setStepIndex(stepIndex - 1), 'back');
 
   // ---- Build the current step's content ----
-  const startScreen = (
+  const typePicker = (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {WALLET_TYPE_OPTIONS.map((o) => (
+        <Chip key={o.id} selected={false} onClick={() => selectType(o.id)}>
+          <span className="block font-medium text-[var(--foreground)]">{o.label}</span>
+          <span className="mt-0.5 block text-xs text-[var(--text-muted)]">{o.description}</span>
+        </Chip>
+      ))}
+    </div>
+  );
+
+  // First wallet: the original centered "what do you have?" picker.
+  const firstAddScreen = (
     <div className="flex min-h-[40vh] flex-col justify-center space-y-8">
       <div className="text-center">
-        <h2 className="text-2xl font-semibold text-[var(--foreground)]">
-          {wallets.length > 0 ? 'Add another wallet' : question.title}
-        </h2>
-        {wallets.length === 0 && question.subtitle && (
+        <h2 className="text-2xl font-semibold text-[var(--foreground)]">{question.title}</h2>
+        {question.subtitle && (
           <p className="mx-auto mt-2 max-w-xl text-[var(--text-muted)]">{question.subtitle}</p>
         )}
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {WALLET_TYPE_OPTIONS.map((o) => (
-          <Chip key={o.id} selected={false} onClick={() => selectType(o.id)}>
-            <span className="block font-medium text-[var(--foreground)]">{o.label}</span>
-            <span className="mt-0.5 block text-xs text-[var(--text-muted)]">{o.description}</span>
-          </Chip>
-        ))}
-      </div>
-      {wallets.length > 0 && (
-        <>
-          <button
-            type="button"
-            onClick={() => onContinue(JSON.stringify(wallets))}
-            className="w-full rounded-xl bg-[var(--primary)] px-6 py-4 text-lg font-medium text-white transition-colors duration-200 hover:bg-[var(--primary-hover)]"
-          >
-            Continue
-          </button>
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-[var(--foreground)]">Your portfolio ({wallets.length})</p>
-            <ul className="space-y-2">
-              {wallets.map((w) => (
-                <li
-                  key={w.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3"
-                >
-                  <span className="text-sm text-[var(--foreground)]">{summarize(w)}</span>
-                  <button
-                    type="button"
-                    onClick={() => setWallets((prev) => prev.filter((x) => x.id !== w.id))}
-                    className="flex-shrink-0 text-sm text-[var(--text-muted)] hover:text-red-500"
-                  >
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </>
-      )}
+      {typePicker}
     </div>
   );
+
+  // Adding another: type picker again, but clearly a deliberate detour with a
+  // way back to the portfolio.
+  const addScreen = (
+    <div className="space-y-6 py-2">
+      <button
+        type="button"
+        onClick={() => go(() => setAdding(false), 'back')}
+        className="text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--primary)]"
+      >
+        ← Back to your wallets
+      </button>
+      <div className="text-center">
+        <h2 className="text-2xl font-semibold text-[var(--foreground)]">Add another wallet</h2>
+        <p className="mt-2 text-[var(--text-muted)]">What kind is it?</p>
+      </div>
+      {typePicker}
+    </div>
+  );
+
+  // Portfolio review (the hero once you have at least one wallet): the list is
+  // the first thing you see, "add another" is clearly optional, finishing is the
+  // prominent primary action.
+  const reviewScreen = (
+    <div className="space-y-6 py-2">
+      <div className="text-center">
+        <h2 className="text-2xl font-semibold text-[var(--foreground)]">
+          Your wallets · {wallets.length}
+        </h2>
+        <p className="mx-auto mt-2 max-w-md text-[var(--text-muted)]">
+          Add each place you keep crypto for a full picture — or see your score whenever you&apos;re ready.
+        </p>
+      </div>
+      <ul className="space-y-2">
+        {wallets.map((w) => (
+          <li
+            key={w.id}
+            className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3 animate-fadeIn"
+          >
+            <span className="text-sm text-[var(--foreground)]">{summarize(w)}</span>
+            <button
+              type="button"
+              onClick={() => setWallets((prev) => prev.filter((x) => x.id !== w.id))}
+              className="flex-shrink-0 text-sm text-[var(--text-muted)] hover:text-red-500"
+            >
+              Remove
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="space-y-3 pt-1">
+        <button
+          type="button"
+          onClick={() => go(() => setAdding(true), 'fwd')}
+          className="w-full rounded-xl border-2 border-dashed border-[var(--border)] px-6 py-3.5 font-medium text-[var(--foreground)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)]"
+        >
+          + Add another wallet
+        </button>
+        <button
+          type="button"
+          onClick={() => onContinue(JSON.stringify(wallets))}
+          className="w-full rounded-xl bg-[var(--primary)] px-6 py-4 text-lg font-medium text-white transition-colors duration-200 hover:bg-[var(--primary-hover)]"
+        >
+          See my score →
+        </button>
+      </div>
+    </div>
+  );
+
+  const startScreen = wallets.length === 0 ? firstAddScreen : adding ? addScreen : reviewScreen;
 
   const stepBody = () => {
     switch (step) {
