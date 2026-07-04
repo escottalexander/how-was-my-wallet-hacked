@@ -237,18 +237,25 @@ export function RiskResult() {
   };
   // Share the actual image via the native sheet — mobile targets (X, Instagram,
   // etc.) attach it as media, so it posts as an image, not just a link.
-  const shareImage = async () => {
-    setShareOpen(false);
+  // Returns a status so the caller can fall back to the menu when the platform's
+  // Web Share (notably Windows desktop with files) isn't actually usable.
+  const shareImage = async (): Promise<'shared' | 'cancelled' | 'unavailable'> => {
     const file = imageFile ?? (await getImageFile());
     const base = { title: 'My wallet security score', text: shareText, url: shareUrl };
     try {
       if (file && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ ...base, files: [file] });
-      } else if (navigator.share) {
-        await navigator.share(base);
+        return 'shared';
       }
-    } catch {
-      /* user cancelled */
+      if (navigator.share) {
+        await navigator.share(base);
+        return 'shared';
+      }
+      return 'unavailable';
+    } catch (err) {
+      // AbortError = the user dismissed the sheet on purpose; anything else
+      // (NotAllowedError, TypeError, lost user-gesture…) means it didn't work.
+      return (err as Error)?.name === 'AbortError' ? 'cancelled' : 'unavailable';
     }
   };
   // Save the image so it can be attached manually (desktop, or apps without a
@@ -289,11 +296,15 @@ export function RiskResult() {
         <div className="relative mt-5 flex justify-center">
           <button
             type="button"
-            onClick={() => {
-              // Mobile: go straight to the native share sheet with the image
-              // attached. Desktop (no file sharing): open the save/links menu.
+            onClick={async () => {
+              // Try the native share sheet with the image attached (mobile, and
+              // desktops with a working Web Share). If it isn't actually usable
+              // — e.g. Windows desktop where it reports support but fails — fall
+              // back to the save/links menu so the button is never dead.
               if (canShareImage) {
-                void shareImage();
+                const result = await shareImage();
+                if (result !== 'unavailable') return; // shared, or user cancelled
+                setShareOpen(true);
                 return;
               }
               setShareOpen((o) => !o);
