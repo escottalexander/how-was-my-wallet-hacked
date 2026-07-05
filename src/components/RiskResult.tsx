@@ -28,7 +28,7 @@ const TYPE_NOTE: Record<PortfolioWalletType, string> = {
   mobile:
     'Mobile wallets run on an internet-connected phone; strong OS sandboxing (iOS especially) lifts the ceiling, but it still can’t match cold storage.',
   hardware:
-    'Hardware wallets can reach a perfect score — the keys stay offline.',
+    'Hardware wallets can reach a perfect score because the keys stay offline.',
   multisig:
     'A well-separated multisig can reach a perfect score; fewer required keys or less key separation lowers the ceiling.',
   exchange:
@@ -79,7 +79,7 @@ function ScoreBar({
       <div
         className="relative h-2 w-full overflow-hidden rounded bg-[var(--background)]"
         tabIndex={showCap ? 0 : undefined}
-        aria-label={showCap ? `Security score ${score} out of ${ceiling} — the most this wallet type allows` : undefined}
+        aria-label={showCap ? `Security score ${score} out of ${ceiling}, the most this wallet type allows` : undefined}
       >
         <div className={`absolute inset-y-0 left-0 rounded ${BAND[band].bar} transition-[width] duration-500`} style={{ width: `${score}%` }} />
         {/* Striped zone = the range this wallet type can never reach. */}
@@ -276,7 +276,7 @@ export function RiskResult() {
   const menuItem = 'block w-full rounded-lg px-3 py-2 text-left text-sm text-[var(--foreground)] transition-colors hover:bg-[var(--primary)]/10';
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-8">
       {/* Overall security score */}
       <div className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-6 text-center">
         <p className="text-sm font-medium uppercase tracking-wide text-[var(--text-muted)]">Your security score</p>
@@ -289,7 +289,7 @@ export function RiskResult() {
           <ScoreBar score={overallScore} band={band} />
         </div>
         <p className="mt-3 text-sm text-[var(--text-muted)]">
-          Higher is better, weighted across {wallets.length} wallet{wallets.length === 1 ? '' : 's'} — bigger balances count for more.
+          Higher is better, weighted across {wallets.length} wallet{wallets.length === 1 ? '' : 's'}. Bigger balances count for more.
         </p>
 
         {/* Share — small button with a popover of options */}
@@ -372,14 +372,19 @@ export function RiskResult() {
                   {wr.issues.slice(0, 3).map((iss, k) => {
                     const page = iss.recommendation ? null : DIAGNOSES[iss.vector].page;
                     return (
-                      <li key={k} className="flex flex-wrap items-center gap-x-2 text-sm text-[var(--text-muted)]">
-                        <span className="text-[var(--primary)]">{iss.recommendation ? '★' : '•'}</span>
-                        <span>{issueText(iss.reason)}</span>
-                        {page && (
-                          <Link href={`/how/${page.slug}`} className="text-[var(--primary)] hover:underline">
-                            fix →
-                          </Link>
-                        )}
+                      <li key={k} className="flex items-start gap-2 text-sm text-[var(--text-muted)]">
+                        <span className="flex-shrink-0 text-[var(--primary)]">{iss.recommendation ? '★' : '•'}</span>
+                        <span>
+                          {issueText(iss.reason)}
+                          {page && (
+                            <>
+                              {' '}
+                              <Link href={`/how/${page.slug}`} className="whitespace-nowrap text-[var(--primary)] hover:underline">
+                                fix →
+                              </Link>
+                            </>
+                          )}
+                        </span>
                       </li>
                     );
                   })}
