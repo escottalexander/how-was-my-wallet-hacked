@@ -42,11 +42,11 @@ export interface WalletEntry {
 }
 
 export const WALLET_TYPE_OPTIONS: { id: PortfolioWalletType; label: string; description: string }[] = [
-  { id: 'browser_extension', label: 'Browser extension wallet', description: 'MetaMask, Rabby, Phantom, etc. — connected to the internet' },
-  { id: 'mobile', label: 'Mobile wallet', description: 'Trust Wallet, Rainbow, Coinbase Wallet, etc. — on your phone' },
-  { id: 'hardware', label: 'Hardware wallet', description: 'Ledger, Trezor, GridPlus — keys kept offline' },
-  { id: 'multisig', label: 'Multisig wallet', description: 'Safe or similar — several keys needed to move funds' },
-  { id: 'exchange', label: 'Exchange / custodial', description: 'Coinbase, Binance, Kraken — they hold the keys' },
+  { id: 'browser_extension', label: 'Browser extension wallet', description: 'MetaMask, Rabby, Phantom, etc. Connected to the internet.' },
+  { id: 'mobile', label: 'Mobile wallet', description: 'Trust Wallet, Rainbow, Coinbase Wallet, etc. On your phone.' },
+  { id: 'hardware', label: 'Hardware wallet', description: 'Ledger, Trezor, GridPlus. Keys kept offline.' },
+  { id: 'multisig', label: 'Multisig wallet', description: 'Safe or similar. Several keys needed to move funds.' },
+  { id: 'exchange', label: 'Exchange / custodial', description: 'Coinbase, Binance, Kraken. They hold the keys.' },
   { id: 'other', label: 'Other', description: "Something that doesn't fit the above" },
 ];
 

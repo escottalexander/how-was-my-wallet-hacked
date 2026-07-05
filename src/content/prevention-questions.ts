@@ -56,7 +56,7 @@ function extensionQuestions(index: number, label: string): Question[] {
         { id: 'install_extensions', label: 'Install other browser extensions' },
         { id: 'open_files_from_people', label: 'Open files people send me' },
         { id: 'use_cracked_software', label: 'Use cracked or "free" paid software' },
-        { id: 'none', label: 'None of these — it stays clean' },
+        { id: 'none', label: 'None of these, it stays clean' },
       ],
       showIf: () => true,
     },
@@ -304,6 +304,6 @@ export const PORTFOLIO_QUESTION: Question = {
   type: 'wallets',
   title: "Let's map out where your crypto lives.",
   subtitle:
-    'Add each wallet or account you keep crypto in, and roughly how much sits in it. This drives your risk far more than your total — a large balance in a hardware or multisig wallet is much safer than a small one in a hot wallet.',
+    'Add each wallet or account you keep crypto in, and roughly how much sits in it. This drives your risk far more than your total: a large balance in a hardware or multisig wallet is much safer than a small one in a hot wallet.',
   showIf: () => true,
 };

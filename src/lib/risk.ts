@@ -165,7 +165,7 @@ function scoreWallet(
     // big hit rather than the scaled, method-by-method model, since the specific
     // digital method matters far less than the fact that it's digital at all.
     if (seed.some((s) => s === 'cloud' || s === 'in_code' || s === 'phone_photo' || s === 'file')) {
-      add(72, 'digital_storage', `${L}: recovery phrase stored digitally — this defeats the hardware wallet`);
+      add(72, 'digital_storage', `${L}: recovery phrase stored digitally, which defeats the hardware wallet`);
     } else if (seed.includes('password_manager')) {
       add(34, 'digital_storage', `${L}: recovery phrase in a password manager, not offline`);
     }
@@ -187,9 +187,9 @@ function scoreWallet(
     // not "wallet type"): the usual cause is that software signers alone can
     // reach the threshold, so no hardware key is needed to move funds.
     if (!hardwareRequired) {
-      ceilingNote = `${softwareCount} of your ${n} signers are software wallets, so those keys alone can reach the ${m}-of-${n} threshold — an attacker wouldn't need a hardware key. Requiring a hardware key to sign would raise the ceiling.`;
+      ceilingNote = `${softwareCount} of your ${n} signers are software wallets, so those keys alone can reach the ${m}-of-${n} threshold and an attacker wouldn't need a hardware key. Requiring a hardware key to sign would raise the ceiling.`;
     } else {
-      ceilingNote = `Separating your keys across devices, locations, and people raises the ceiling — a fully separated, hardware-required multisig reaches 100.`;
+      ceilingNote = `Separating your keys across devices, locations, and people raises the ceiling. A fully separated, hardware-required multisig reaches 100.`;
     }
     const signer = answers[wk(i, 'signer_exposure')];
     if (signer === 'several') add(14 * signerScale, 'malicious_download', `${L}: several signer devices see everyday use`);
@@ -310,7 +310,7 @@ export function assessRisk(answers: AnswerMap): RiskAssessment {
       const penalty = 14;
       wr.issues.push({
         vector: 'compromised_setup',
-        reason: `${cap(wr.label)}: most of your crypto behind one hardware key — a single leak loses it all; a multisig needs several keys to move funds, so it is the safer choice`,
+        reason: `${cap(wr.label)}: most of your crypto behind one hardware key, so a single leak loses it all; a multisig needs several keys to move funds, so it is the safer choice`,
         points: penalty,
         recommendation: true,
       });

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   // composed title stays short enough to avoid SERP truncation (~52 chars).
   title: { absolute: TITLE },
   description:
-    "Map your wallets and answer a few quick questions to get a 0–100 crypto wallet security score — with the exact weak spots to fix. No wallet connection, no balances shared.",
+    "Map your wallets and answer a few quick questions to get a 0-100 crypto wallet security score, with the exact weak spots to fix. No wallet connection, no balances shared.",
   alternates: { canonical: "/how-secure-is-my-wallet" },
   openGraph: {
     type: "website",
