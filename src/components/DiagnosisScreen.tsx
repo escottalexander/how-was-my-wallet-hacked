@@ -49,7 +49,7 @@ export function DiagnosisScreen({
       : null;
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-8">
       {/* Main diagnosis title */}
       <div className="text-center">
         <h1 className="text-2xl font-semibold text-[var(--foreground)]">{content.title}</h1>

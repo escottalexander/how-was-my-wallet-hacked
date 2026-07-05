@@ -259,7 +259,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-8">
       {header}
 
       {/* KPI cards */}
