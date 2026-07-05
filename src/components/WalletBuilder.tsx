@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import type { Question } from '@/lib/questions';
 import {
   WALLET_TYPE_OPTIONS,
@@ -53,7 +53,7 @@ function summarize(w: WalletEntry): string {
   if (w.type === 'hardware' && w.hwSource) {
     parts.push(HW_SOURCE_OPTIONS.find((o) => o.id === w.hwSource)?.label ?? '');
   }
-  return parts.filter(Boolean).join(' — ');
+  return parts.filter(Boolean).join(' · ');
 }
 
 function stepsAfterType(type: PortfolioWalletType | undefined): string[] {
@@ -76,11 +76,6 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<Partial<WalletEntry>>({});
   const [stepIndex, setStepIndex] = useState(0);
-  const [dir, setDir] = useState<'fwd' | 'back'>('fwd');
-  const [animKey, setAnimKey] = useState(0);
-  // The content currently on screen, snapshotted so it can animate out.
-  const [exiting, setExiting] = useState<{ node: React.ReactNode; dir: 'fwd' | 'back' } | null>(null);
-  const bodyRef = useRef<React.ReactNode>(null);
 
   const sequence = ['type', ...stepsAfterType(draft.type)];
   const step = sequence[stepIndex] ?? 'type';
@@ -91,16 +86,6 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
     if (d.type === 'multisig') return !!(d.msigThreshold && d.msigSigners && d.msigSeparation && d.msigSeparation.length > 0 && d.msigHardwareCount !== undefined);
     if (d.type === 'hardware') return !!d.hwSource;
     return true;
-  };
-
-  // Snapshot the visible content, then run the state mutation, so the old layer
-  // can slide/blur out while the new one slides in.
-  const go = (mutator: () => void, direction: 'fwd' | 'back') => {
-    setExiting({ node: bodyRef.current, dir: direction });
-    setDir(direction);
-    setAnimKey((k) => k + 1);
-    mutator();
-    window.setTimeout(() => setExiting(null), 340);
   };
 
   const applyAdvance = (d: Partial<WalletEntry>) => {
@@ -117,18 +102,18 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
     }
   };
 
-  const selectType = (type: PortfolioWalletType) =>
-    go(() => {
-      setDraft(type === 'multisig' ? { type, amount: draft.amount, msigThreshold: 2, msigSigners: 3 } : { type, amount: draft.amount });
-      setStepIndex(1);
-    }, 'fwd');
+  const selectType = (type: PortfolioWalletType) => {
+    setDraft(type === 'multisig' ? { type, amount: draft.amount, msigThreshold: 2, msigSigners: 3 } : { type, amount: draft.amount });
+    setStepIndex(1);
+  };
 
   const pickAndAdvance = (patch: Partial<WalletEntry>) => {
     const nd = { ...draft, ...patch };
-    go(() => { setDraft(nd); applyAdvance(nd); }, 'fwd');
+    setDraft(nd);
+    applyAdvance(nd);
   };
 
-  const back = () => go(() => setStepIndex(stepIndex - 1), 'back');
+  const back = () => setStepIndex(stepIndex - 1);
 
   // ---- Build the current step's content ----
   const typePicker = (
@@ -142,9 +127,10 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
     </div>
   );
 
-  // First wallet: the original centered "what do you have?" picker.
+  // First wallet: the "what do you have?" picker. Top-aligned like every other
+  // step so the heading and options don't shift position between screens.
   const firstAddScreen = (
-    <div className="flex min-h-[40vh] flex-col justify-center space-y-8">
+    <div className="space-y-8 py-2">
       <div className="text-center">
         <h2 className="text-2xl font-semibold text-[var(--foreground)]">{question.title}</h2>
         {question.subtitle && (
@@ -161,7 +147,7 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
     <div className="space-y-6 py-2">
       <button
         type="button"
-        onClick={() => go(() => setAdding(false), 'back')}
+        onClick={() => setAdding(false)}
         className="text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--primary)]"
       >
         ← Back to your wallets
@@ -191,7 +177,7 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
         {wallets.map((w) => (
           <li
             key={w.id}
-            className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3 animate-fadeIn"
+            className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3"
           >
             <span className="text-sm text-[var(--foreground)]">{summarize(w)}</span>
             <button
@@ -207,7 +193,7 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
       <div className="space-y-3 pt-1">
         <button
           type="button"
-          onClick={() => go(() => setAdding(true), 'fwd')}
+          onClick={() => setAdding(true)}
           className="w-full rounded-xl border-2 border-dashed border-[var(--border)] px-6 py-3.5 font-medium text-[var(--foreground)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)]"
         >
           + Add another wallet
@@ -280,7 +266,7 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
               </select>
               <span className="text-sm text-[var(--text-muted)]">signers</span>
             </div>
-            <NextButton onClick={() => go(() => applyAdvance(draft), 'fwd')} enabled={!!(draft.msigThreshold && draft.msigSigners)} />
+            <NextButton onClick={() => applyAdvance(draft)} enabled={!!(draft.msigThreshold && draft.msigSigners)} />
           </StepShell>
         );
       case 'msig_hardware':
@@ -298,7 +284,7 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
                 ))}
               </select>
             </div>
-            <NextButton onClick={() => go(() => applyAdvance(draft), 'fwd')} enabled={draft.msigHardwareCount !== undefined} />
+            <NextButton onClick={() => applyAdvance(draft)} enabled={draft.msigHardwareCount !== undefined} />
           </StepShell>
         );
       case 'msig_separation':
@@ -324,7 +310,7 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
                 </Chip>
               ))}
             </div>
-            <NextButton label="Add to portfolio" onClick={() => go(() => applyAdvance(draft), 'fwd')} enabled={(draft.msigSeparation ?? []).length > 0} />
+            <NextButton label="Add to portfolio" onClick={() => applyAdvance(draft)} enabled={(draft.msigSeparation ?? []).length > 0} />
           </StepShell>
         );
       default:
@@ -333,36 +319,19 @@ export function WalletBuilder({ question, value, onContinue }: WalletBuilderProp
   };
 
   const subStep = (
-    <div className="relative flex min-h-[60vh] flex-col justify-center">
+    <div className="space-y-6 py-2">
       <button
         type="button"
         onClick={back}
-        className="absolute left-0 top-0 text-sm font-medium text-[var(--text-muted)] hover:text-[var(--primary)]"
+        className="block text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--primary)]"
       >
         ← Back
       </button>
-      <div className="w-full">{stepBody()}</div>
+      {stepBody()}
     </div>
   );
 
-  const content = step === 'type' ? startScreen : subStep;
-  // Snapshot the current body after each render so `go()` can animate it out.
-  // (go/back only fire from user events, after the effect has committed.)
-  useEffect(() => {
-    bodyRef.current = content;
-  });
-
-  const enterAnim = dir === 'back' ? 'animate-slideInLeft' : 'animate-slideInRight';
-  const exitAnim = exiting?.dir === 'back' ? 'animate-slideOutRight' : 'animate-slideOutLeft';
-
-  return (
-    <div className="relative overflow-hidden">
-      {exiting && <div className={`pointer-events-none absolute inset-0 ${exitAnim}`}>{exiting.node}</div>}
-      <div key={animKey} className={enterAnim}>
-        {content}
-      </div>
-    </div>
-  );
+  return step === 'type' ? startScreen : subStep;
 }
 
 function StepShell({
@@ -396,7 +365,7 @@ function NextButton({ onClick, enabled, label = 'Next' }: { onClick: () => void;
       type="button"
       onClick={onClick}
       disabled={!enabled}
-      className={`w-full rounded-xl bg-[var(--primary)] px-6 py-3.5 font-medium text-white transition-colors hover:bg-[var(--primary-hover)] ${
+      className={`w-full rounded-xl bg-[var(--primary)] px-6 py-4 text-lg font-medium text-white transition-colors hover:bg-[var(--primary-hover)] ${
         enabled ? '' : 'cursor-not-allowed opacity-50'
       }`}
     >

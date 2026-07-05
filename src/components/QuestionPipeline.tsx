@@ -47,12 +47,12 @@ function OptionButton({ label, description, selected, onClick, disabled }: Optio
 // Distinct text accent per wallet, so the highlighted wallet name shifts colour
 // when a new wallet's questions begin.
 const WALLET_TEXT_ACCENTS = [
-  'text-indigo-600',
   'text-teal-600',
   'text-amber-600',
   'text-rose-600',
   'text-sky-600',
-  'text-violet-600',
+  'text-orange-600',
+  'text-emerald-600',
 ];
 
 // Renders the title with the wallet phrase emphasised (bold + accent colour) so
@@ -113,7 +113,7 @@ function SingleQuestion({
   disabled?: boolean;
 }) {
   return (
-    <div className="space-y-8">
+    <div className="flex flex-1 flex-col gap-8">
       <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} context={question.walletContext} />
       <div className="grid grid-cols-1 gap-4">
         {(question.options ?? []).map((opt) => (
@@ -157,7 +157,7 @@ function MultiQuestion({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-1 flex-col gap-8">
       <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} context={question.walletContext} />
       <div className="grid grid-cols-1 gap-4">
         {(question.options ?? []).map((opt) => (
@@ -176,7 +176,7 @@ function MultiQuestion({
         onClick={onContinue}
         disabled={disabled || selected.length === 0}
         className={`
-          w-full rounded-xl bg-[var(--primary)] px-6 py-4 text-lg font-medium text-white
+          mt-auto w-full rounded-xl bg-[var(--primary)] px-6 py-4 text-lg font-medium text-white
           transition-colors duration-200 hover:bg-[var(--primary-hover)]
           ${disabled || selected.length === 0 ? 'cursor-not-allowed opacity-50' : ''}
         `}
@@ -224,7 +224,7 @@ function DateQuestion({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-1 flex-col gap-8">
       <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} context={question.walletContext} />
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -259,7 +259,7 @@ function DateQuestion({
         onClick={handleContinue}
         disabled={disabled}
         className={`
-          w-full rounded-xl bg-[var(--primary)] px-6 py-4 text-lg font-medium text-white
+          mt-auto w-full rounded-xl bg-[var(--primary)] px-6 py-4 text-lg font-medium text-white
           transition-colors duration-200 hover:bg-[var(--primary-hover)]
           ${disabled ? 'cursor-not-allowed opacity-50' : ''}
         `}
@@ -285,7 +285,7 @@ function TextQuestion({
   disabled?: boolean;
 }) {
   return (
-    <div className="space-y-8">
+    <div className="flex flex-1 flex-col gap-8">
       <QuestionHeader title={question.title} subtitle={question.subtitle} explainer={question.explainer} context={question.walletContext} />
       <textarea
         value={value}
@@ -295,7 +295,7 @@ function TextQuestion({
         placeholder="Share anything you think is relevant..."
         className="w-full rounded-xl border-2 border-[var(--border)] bg-[var(--card-bg)] px-5 py-4 text-[var(--foreground)] placeholder:text-[var(--text-muted)] focus:border-[var(--primary)] focus:outline-none"
       />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="mt-auto grid grid-cols-2 gap-4">
         <button
           type="button"
           onClick={onContinue}
@@ -483,26 +483,27 @@ export function QuestionPipeline({ onAnswer, onComplete, initialAnswers, questio
     }
   };
 
+  const canGoBack = currentQuestion.type !== 'text' && historyIds.length > 1;
+
   return (
     <div>
       <ProgressBar progress={progress} />
-      <div className="mx-auto max-w-2xl space-y-8 px-4 py-8">
+      {/* Fixed-height column with Back pinned top-left and the primary action
+          anchored at the bottom, so controls sit in the same spot on every
+          question instead of following the content height around. */}
+      <div className="mx-auto flex min-h-[70vh] max-w-2xl flex-col px-4 py-6">
+        <div className="mb-6 h-6">
+          {canGoBack && (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--primary)]"
+            >
+              ← Back
+            </button>
+          )}
+        </div>
         {renderQuestion()}
-        {currentQuestion.type !== 'text' && (
-          <button
-            type="button"
-            onClick={handleBack}
-            disabled={historyIds.length <= 1}
-            className={`
-              w-full rounded-xl border-2 border-[var(--border)] px-6 py-4
-              text-lg font-medium text-[var(--foreground)]
-              transition-colors duration-200 hover:border-[var(--primary)]
-              ${historyIds.length <= 1 ? 'cursor-not-allowed opacity-50' : ''}
-            `}
-          >
-            Back
-          </button>
-        )}
       </div>
     </div>
   );
