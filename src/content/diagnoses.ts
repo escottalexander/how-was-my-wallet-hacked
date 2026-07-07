@@ -20,9 +20,12 @@ export interface DiagnosisContent {
   externalLinks?: { label: string; url: string }[];
   page?: DiagnosisPage;
   // Forward-looking framing for the prevention flow ("am I at risk"). The lead
-  // risk uses both fields; runner-up risks use only `title`. Everything else
-  // (actionItems, howItWorks, warningSigns, page, externalLinks) is reused as-is.
-  prevention?: { title: string; mainCopy: string[] };
+  // risk uses both fields; runner-up risks use only `title`. actionItems here
+  // override the post-hack actionItems, which often include recovery steps
+  // ("create a new wallet") that make no sense for someone not yet compromised.
+  // Everything else (howItWorks, warningSigns, page, externalLinks) is reused
+  // as-is.
+  prevention?: { title: string; mainCopy: string[]; actionItems?: string[] };
 }
 
 // Context-specific copy for the malicious_transaction result, keyed by how the
@@ -184,6 +187,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       mainCopy: [
         'Reusing a password anywhere that protects your crypto means one old breach can unlock your email, cloud storage, or exchange account, and the seed-phrase backup or funds behind them.',
       ],
+      actionItems: [
+        'Use a unique, randomly generated password for every account',
+        'Use a reputable password manager with a very strong master password',
+        'Enable 2FA everywhere, preferably an authenticator app or hardware key, not SMS',
+        'Start with your email and exchange accounts, they unlock everything else',
+      ],
     },
     mainCopy: [
       'When you use the same password across multiple sites, a breach on any one of those sites exposes all your accounts. Hackers buy leaked password databases and automatically try those credentials everywhere - including password managers and crypto-related services.',
@@ -223,9 +232,15 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
     },
     title: 'You likely entered your seed phrase into a fake website.',
     prevention: {
-      title: 'Entering your seed phrase on a fake site',
+      title: 'Landing on a fake wallet or dApp site',
       mainCopy: [
-        'Fake wallet and dApp sites exist to get you to type your seed phrase to "validate," "sync," or "recover" your wallet. The moment you enter it anywhere online, an attacker can import your wallet and drain it. No legitimate service ever asks for it.',
+        'Fake wallet and dApp sites are pixel-perfect clones of the real thing, reached through search ads, DMs, and lookalike domains. Some ask you to "validate" or "sync" your wallet with your seed phrase; others serve a wallet-draining transaction for you to sign. Reaching the right site every time is the habit that closes both doors.',
+      ],
+      actionItems: [
+        'Bookmark the official sites you use and only enter through those bookmarks',
+        'Don\'t follow wallet or dApp links from ads, DMs, or search results',
+        'Never type your seed phrase into any website, whatever reason it gives',
+        'Read what a site asks you to sign before you approve it',
       ],
     },
     mainCopy: [
@@ -343,6 +358,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       mainCopy: [
         "Files sent by a friendly stranger, a \"collab partner,\" or a hijacked friend's account can carry info-stealers that harvest seed phrases, wallet data, and clipboard contents. The trust and the plausible reason are the whole point.",
       ],
+      actionItems: [
+        "Never download files from people you don't know personally",
+        'Be suspicious even of files from friends, since their accounts may be compromised',
+        'Treat anyone offering unsolicited help as a scammer',
+        'If you must open one, do it on a device that has no wallet on it',
+      ],
     },
     mainCopy: [
       'Scammers pose as friendly community members, potential business partners, or even "support staff" and send files that contain malware. This malware can steal seed phrases, monitor your clipboard, or take control of your browser extensions.',
@@ -421,6 +442,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       mainCopy: [
         "Fake download pages, malicious ads, and \"cracked\" or free versions of paid software bundle info-stealers that harvest seed phrases, browser-wallet data, and saved passwords, often while the app works exactly as advertised.",
       ],
+      actionItems: [
+        'Only download software from official websites',
+        'Verify URLs carefully before downloading anything',
+        'Avoid "cracked" or free versions of paid software, a classic malware vehicle',
+        'Keep your wallet off the machine where you download and experiment, or use a hardware wallet',
+      ],
     },
     mainCopy: [
       'Fake download sites, compromised legitimate sites, and malicious ads can all serve malware disguised as legitimate software. This malware then steals your seed phrase, monitors your activity, or takes control of your wallet.',
@@ -459,6 +486,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       title: 'A fake job or freelance scam',
       mainCopy: [
         'Fake recruiters and clients send "test projects," "onboarding documents," or "required software" laced with malware that steals wallets. These campaigns are well-resourced and patient, and they specifically target developers and others likely to hold crypto.',
+      ],
+      actionItems: [
+        'Research companies thoroughly before opening anything they send',
+        'Never run code or install software from unknown sources',
+        'Be suspicious of unsolicited job offers, especially in DMs',
+        'Review "test projects" in a virtual machine or on a device with no wallet',
       ],
     },
     mainCopy: [
@@ -499,6 +532,12 @@ export const DIAGNOSES: Record<DiagnosisType, DiagnosisContent> = {
       title: 'A malicious browser extension',
       mainCopy: [
         'A browser extension can be granted permission to read and change every page you visit. A fake wallet extension, a hijacked legitimate one, or an over-permissioned utility can capture your seed phrase as you type it or alter a transaction before you sign.',
+      ],
+      actionItems: [
+        'Only install extensions from official stores, and check the publisher',
+        "Regularly review and remove extensions you don't use",
+        'Use a separate browser profile for crypto activities',
+        'A hardware wallet keeps your keys out of the browser entirely',
       ],
     },
     mainCopy: [

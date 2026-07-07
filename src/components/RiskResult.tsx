@@ -412,7 +412,7 @@ export function RiskResult() {
           <div className="rounded-xl bg-[var(--card-bg)] border border-[var(--border)] p-6">
             <h3 className="text-lg font-semibold text-[var(--foreground)] mb-4">How to fix it</h3>
             <ul className="space-y-3">
-              {lead.actionItems.map((item, i) => (
+              {(lead.prevention.actionItems ?? lead.actionItems).map((item, i) => (
                 <li key={i} className="flex gap-3 text-[var(--text-muted)]">
                   <span className="text-[var(--primary)] flex-shrink-0">•</span>
                   <span>{item}</span>
