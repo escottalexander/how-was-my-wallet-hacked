@@ -57,7 +57,7 @@ export default async function ShareLanding({
         </h1>
         <p className="text-lg text-[var(--text-muted)] leading-relaxed">
           Map your wallets, answer a few quick questions, and get a security score with the exact
-          weak spots to fix. No wallet connection, no balances shared.
+          weak spots to fix.
         </p>
         <Link
           href="/how-secure-is-my-wallet"

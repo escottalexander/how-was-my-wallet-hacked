@@ -32,10 +32,7 @@ export default function Image() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', fontSize: 34, fontWeight: 600, color: '#1f6a57', letterSpacing: -0.5 }}>
-            No wallet connection. No balances shared.
-          </div>
-          <div style={{ display: 'flex', fontSize: 27, fontWeight: 400, marginTop: 12, color: '#6f6a5d' }}>
+          <div style={{ display: 'flex', fontSize: 27, fontWeight: 400, color: '#6f6a5d' }}>
             howwasmywallethacked.com/how-secure-is-my-wallet
           </div>
         </div>
