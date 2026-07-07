@@ -298,27 +298,31 @@ export function assessRisk(answers: AnswerMap): RiskAssessment {
     wr.shareOfTotal = totalWeight > 0 ? (AMOUNT_WEIGHT[wr.amount] ?? 0) / totalWeight : walletRisks.length ? 1 / walletRisks.length : 0;
   });
 
-  // Portfolio flag: most of your crypto sitting behind a single hardware key,
-  // with no multisig anywhere, is a single point of failure — one leaked key and
-  // it's all gone, where a multisig needs several. Nudge toward a multisig. Runs
-  // before the overall so it counts, and is marked as advice (not a weak-spot).
+  // Portfolio flag: most of your crypto sitting behind a single hardware key is
+  // a single point of failure; one leaked key and it's all gone, where a
+  // multisig needs several. Fires even when a multisig exists elsewhere in the
+  // portfolio, since the bulk of the funds is still one key away (a multisig
+  // holding the majority is exempt by construction: no hardware wallet can then
+  // clear the >50% share check). Runs before the overall so it counts, and is
+  // marked as advice (not a weak-spot).
   const hasMultisig = wallets.some((w) => w.type === 'multisig');
-  if (!hasMultisig) {
-    walletRisks.forEach((wr) => {
-      const significant = (AMOUNT_WEIGHT[wr.amount] ?? 0) >= AMOUNT_WEIGHT['range_10000_50000']; // $10k+
-      if (wr.type !== 'hardware' || !significant || wr.shareOfTotal <= 0.5) return;
-      const penalty = 14;
-      wr.issues.push({
-        vector: 'compromised_setup',
-        reason: `${cap(wr.label)}: most of your crypto behind one hardware key, so a single leak loses it all; a multisig needs several keys to move funds, so it is the safer choice`,
-        points: penalty,
-        recommendation: true,
-      });
-      wr.issues.sort((a, b) => b.points - a.points);
-      wr.score = clamp(wr.score - penalty, 0, 100);
-      wr.band = securityBand(wr.score);
+  walletRisks.forEach((wr) => {
+    const significant = (AMOUNT_WEIGHT[wr.amount] ?? 0) >= AMOUNT_WEIGHT['range_5000_10000']; // $5k+
+    if (wr.type !== 'hardware' || !significant || wr.shareOfTotal <= 0.5) return;
+    const penalty = 14;
+    const advice = hasMultisig
+      ? 'you already have a multisig, so consider moving the bulk of your holdings into it'
+      : 'a multisig needs several keys to move funds, so it is the safer choice';
+    wr.issues.push({
+      vector: 'compromised_setup',
+      reason: `${cap(wr.label)}: most of your crypto behind one hardware key, so a single leak loses it all; ${advice}`,
+      points: penalty,
+      recommendation: true,
     });
-  }
+    wr.issues.sort((a, b) => b.points - a.points);
+    wr.score = clamp(wr.score - penalty, 0, 100);
+    wr.band = securityBand(wr.score);
+  });
 
   // Overall: weight each wallet by how much of your crypto sits in it, with a
   // slight extra emphasis on the weaker wallets so a poorly-secured wallet
