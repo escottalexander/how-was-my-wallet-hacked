@@ -27,10 +27,10 @@ export default function NotFound() {
           Back to home
         </Link>
         <Link
-          href="/how-secure-is-my-wallet"
+          href="/how-secure-is-my-crypto"
           className="inline-flex h-11 items-center justify-center rounded-full border-2 border-[var(--border)] px-6 font-medium text-[var(--foreground)] transition-colors hover:border-[var(--primary)]"
         >
-          How secure is my wallet?
+          How secure is my crypto?
         </Link>
       </div>
     </div>

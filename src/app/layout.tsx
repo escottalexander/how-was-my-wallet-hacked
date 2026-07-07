@@ -150,10 +150,10 @@ export default function RootLayout({
               How was my wallet hacked?
             </Link>
             <Link
-              href="/how-secure-is-my-wallet"
+              href="/how-secure-is-my-crypto"
               className="hover:text-[var(--primary)] transition-colors"
             >
-              How secure is my wallet?
+              How secure is my crypto?
             </Link>
             <a
               href="https://github.com/escottalexander"

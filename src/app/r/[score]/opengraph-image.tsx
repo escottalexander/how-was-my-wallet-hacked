@@ -60,7 +60,7 @@ export default async function Image({ params }: { params: Promise<{ score: strin
             Can you beat my score? →
           </div>
           <div style={{ display: 'flex', fontSize: 27, fontWeight: 400, marginTop: 14, color: '#6f6a5d' }}>
-            howwasmywallethacked.com/how-secure-is-my-wallet
+            howwasmywallethacked.com/how-secure-is-my-crypto
           </div>
         </div>
       </div>

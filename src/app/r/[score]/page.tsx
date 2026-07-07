@@ -17,7 +17,7 @@ export async function generateMetadata({
   const { score } = await params;
   const s = clampScore(score);
   const title = "Can you beat this wallet security score?";
-  const description = `Someone scored ${s}/100 on their crypto wallet security check. How secure is your wallet? See if you can beat it.`;
+  const description = `Someone scored ${s}/100 on their crypto wallet security check. How secure is your crypto? See if you can beat it.`;
   return {
     title,
     description,
@@ -60,10 +60,10 @@ export default async function ShareLanding({
           weak spots to fix.
         </p>
         <Link
-          href="/how-secure-is-my-wallet"
+          href="/how-secure-is-my-crypto"
           className="inline-flex h-12 min-w-[180px] items-center justify-center rounded-full bg-[var(--primary)] px-8 text-base font-medium text-white shadow-sm hover:bg-[var(--primary-hover)] transition-colors"
         >
-          Check my wallet
+          Check my crypto
         </Link>
         <p className="text-sm text-[var(--text-muted)]">
           Already been hacked?{" "}

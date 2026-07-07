@@ -152,7 +152,7 @@ export default async function HowPage({
         </Link>
         <p className="mt-4 text-sm text-[var(--text-muted)]">
           Not been hacked yet?{" "}
-          <Link href="/how-secure-is-my-wallet" className="text-[var(--primary)] hover:underline">
+          <Link href="/how-secure-is-my-crypto" className="text-[var(--primary)] hover:underline">
             Check how exposed you are →
           </Link>
         </p>

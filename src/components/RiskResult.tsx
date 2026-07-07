@@ -193,7 +193,7 @@ export function RiskResult() {
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
         <p className="text-[var(--text-muted)]">We couldn&apos;t find your answers. Start the check to see your security score.</p>
         <Link
-          href="/how-secure-is-my-wallet"
+          href="/how-secure-is-my-crypto"
           className="inline-flex h-11 items-center justify-center rounded-full bg-[var(--primary)] px-6 text-white font-medium hover:bg-[var(--primary-hover)] transition-colors"
         >
           Start the security check

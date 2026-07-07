@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-export const alt = 'How secure is my wallet? Get your crypto wallet security score';
+export const alt = 'How secure is my crypto? Get your wallet security score';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -24,7 +24,7 @@ export default function Image() {
       >
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}>
           <div style={{ display: 'flex', fontSize: 84, fontWeight: 700, lineHeight: 1.05, letterSpacing: -2 }}>
-            How secure is my wallet?
+            How secure is my crypto?
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', fontSize: 36, fontWeight: 400, marginTop: 24, color: '#6f6a5d', letterSpacing: -0.4 }}>
             Get your 0–100 crypto wallet security score and see exactly where you&apos;re exposed.
@@ -33,7 +33,7 @@ export default function Image() {
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', fontSize: 27, fontWeight: 400, color: '#6f6a5d' }}>
-            howwasmywallethacked.com/how-secure-is-my-wallet
+            howwasmywallethacked.com/how-secure-is-my-crypto
           </div>
         </div>
       </div>

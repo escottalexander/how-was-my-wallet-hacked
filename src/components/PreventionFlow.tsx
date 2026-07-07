@@ -77,7 +77,7 @@ export function PreventionFlow() {
         body: JSON.stringify({ pathAttemptId, complete: true }),
       }).catch(() => {});
     }
-    router.push('/how-secure-is-my-wallet/result');
+    router.push('/how-secure-is-my-crypto/result');
   };
 
   // Only wait for the session provider to settle; the flow itself works even if
